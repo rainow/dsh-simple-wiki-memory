@@ -87,6 +87,10 @@ dsh plugin --profile web remove dsh-simple-wiki-memory
 4. 说 **"整理记忆"** → 触发重组流程（执行前需你确认）。
 5. 自带 **`memory-query`** 技能处理检索（含目录扫描兜底）。
 
+下次新会话开始时，agent 会自动提醒你待确认的记忆（写入是实时的，所以 `/new` 或关页面都不丢）：
+
+![pending 汇报示例](assets/pending-report-example.png)
+
 ## 配置
 
 v0.1 无用户可见配置项，默认值安全。计划（v0.2）：settings 段提供 TTL 天数、自动 commit 开关、记忆目录路径。

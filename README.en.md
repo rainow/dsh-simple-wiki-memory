@@ -87,6 +87,10 @@ Removing the plugin stops the runtime hooks (auto-commit, pending report) but **
 4. Say **"organize memory"** to trigger the reorganization workflow (you approve before it executes).
 5. The bundled **`memory-query`** skill handles retrieval with the directory-scan fallback.
 
+At the start of your next session, the agent automatically reminds you of unconfirmed memory (writing is realtime, so `/new` or closing the page never loses anything):
+
+![pending report example](assets/pending-report-example.png)
+
 ## Configuration
 
 v0.1 has no user-facing configuration; defaults are safe. Planned (v0.2): settings section for TTL days, auto-commit on/off, memory directory path.
