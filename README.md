@@ -21,7 +21,7 @@ Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**
 ├── AGENTS.md              # index + six-rule maintenance convention (auto-injected)
 └── workspace/             # the vault (a git repo)
     ├── reference/         # confirmed memory topics (indexed, searchable)
-    ├── pending/           # unconfirmed drafts (NOT indexed; waiting for your "存档")
+    ├── pending/           # unconfirmed drafts (NOT indexed; waiting for you to confirm)
     ├── archive/           # outdated topics (kept, not searched)
     └── memory-log.md      # append-only operation log (audit + freshness)
 ```
@@ -29,9 +29,9 @@ Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**
 ### The six rules (all in AGENTS.md, injected into every session)
 
 1. **Write trigger** — check at session end for memorable info.
-2. **Admission** — unconfirmed → `pending/`; say "存档/确认" to promote to `reference/` + update index + log. TTL: 7d (interactive) / 30d (unattended).
+2. **Admission** — unconfirmed → `pending/`; say **"save"** / **"confirm"** / **"promote"** to promote to `reference/` + update index + log. TTL: 7d (interactive) / 30d (unattended).
 3. **Unattended sessions** (task-board timers, background subagents) — write `pending/` only, never promote themselves.
-4. **Periodic cleanup** — say "整理记忆" → agent proposes reorganization (split/merge/rename/archive), you approve, outdated content goes to `archive/`.
+4. **Periodic cleanup** — say **"organize memory"** → agent proposes reorganization (split/merge/rename/archive), you approve, outdated content goes to `archive/`.
 5. **Backup** — `workspace/` is a git repo; auto-commit after memory changes.
 6. **Retrieval** — check the index first; if no match, scan `reference/` (fallback), never assume "no memory".
 
@@ -65,8 +65,8 @@ Removing the plugin stops the runtime hooks (auto-commit, pending report) but **
 
 1. Install (above); the vault is scaffolded automatically on first startup.
 2. In any session, ask the agent to remember something — it writes to `pending/`.
-3. Say **"存档/确认"** to promote pending drafts into confirmed memory.
-4. Say **"整理记忆"** to trigger the reorganization workflow (you approve before it executes).
+3. Say **"save"** / **"confirm"** / **"promote"** to promote pending drafts into confirmed memory.
+4. Say **"organize memory"** to trigger the reorganization workflow (you approve before it executes).
 5. The bundled **`memory-query`** skill handles retrieval with the directory-scan fallback.
 
 ## Configuration
