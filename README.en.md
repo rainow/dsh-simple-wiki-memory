@@ -1,5 +1,7 @@
 # DSWM — Simple Wiki Memory for DeepSeek Harness
 
+A super-simplified LLM-wiki memory plugin: one index document (auto-loaded) + one markdown file per topic (read only when needed) — no dumping everything into the context and burning tokens. Simple and lightweight, painless to install/uninstall, and freely editable however you like.
+
 A self-maintaining persistent memory system for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). Built on the native `dsh-agent-instructions` (AGENTS.md) mechanism — no RAG, no vector DB, no LLM calls at runtime. Just Markdown + git.
 
 > 简体中文（默认）见 [README.md](README.md) · English: this file.

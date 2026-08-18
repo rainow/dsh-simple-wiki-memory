@@ -1,5 +1,7 @@
 # DSWM — DeepSeek Harness 简易 Wiki 记忆插件
 
+超级简化版 llm-wiki 记忆插件：一个索引文档（自动加载）+ 每个 topic 一个单独 md 文件（需要时才 read），避免啥都往上下文里面塞浪费 token。简单轻量，安装卸载都没有压力，想怎么改就怎么改。
+
 基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）原生 `dsh-agent-instructions`（AGENTS.md）机制的自维护持久记忆系统。无 RAG、无向量库、无运行时 LLM 调用——纯 Markdown + git。
 
 > English: [README.en.md](README.en.md).
