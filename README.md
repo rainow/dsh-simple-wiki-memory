@@ -4,6 +4,14 @@ A self-maintaining persistent memory system for [DeepSeek Harness](https://githu
 
 > 简体中文说明见 [README.zh.md](README.zh.md)。
 
+## Overview — what problem does this solve?
+
+**Long-term memory without the token tax.** If you dump all your memory into the prompt, a large memory costs a fortune in tokens every session. DSWM loads only the **index** (small, auto-injected every session); the actual topic files are read **on demand** when a task needs them.
+
+**Lightweight, no heavy machinery.** LLM-Wiki-style systems are powerful but heavy and hard to maintain — overkill for most users. DSWM's entire memory is plain Markdown files: edit them by hand, or let the agent edit them. What you see is what you get.
+
+**Shared across harnesses.** Long-term memory should belong to you, not to one harness. DSWM's memory is plain `.md` files that any harness can consume — to reuse the same memory in another tool, just point that tool's `AGENTS.md` (or equivalent) at it.
+
 ## What it does
 
 Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**) before the first request. DSWM maintains that file plus a small wiki vault:
@@ -27,11 +35,17 @@ Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**
 5. **Backup** — `workspace/` is a git repo; auto-commit after memory changes.
 6. **Retrieval** — check the index first; if no match, scan `reference/` (fallback), never assume "no memory".
 
+## Compatibility
+
+- Tested with DSH 10.33.0 (web profile, `dsh-agent-instructions` baseline injection).
+- Last verified: 2026-08-18.
+- Requires the native `dsh-agent-instructions` mechanism (enabled by default in the `dsh-base` bundle); if your deployment disables it, memory injection will not work.
+
 ## Install
 
 ```bash
-# from GitHub (recommended)
-dsh plugin --profile web add github:<owner>/dsh-simple-wiki-memory
+# from GitHub
+dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory
 
 # or from npm once published
 dsh plugin --profile web add dsh-simple-wiki-memory
@@ -39,25 +53,46 @@ dsh plugin --profile web add dsh-simple-wiki-memory
 
 First startup syncs the skeleton, scaffolds the vault, and git-inits `workspace/` — idempotent, merge-only, never clobbers your existing `~/.dsh/AGENTS.md` index entries.
 
-## Usage
+## Uninstall
 
-- Say **"存档/确认"** to promote pending drafts into confirmed memory.
-- Say **"整理记忆"** to trigger the reorganization workflow (you approve before it executes).
-- The bundled **`memory-query`** skill handles retrieval with the directory-scan fallback.
-- Any session that relates to past preferences/decisions/facts should query memory first.
+```bash
+dsh plugin --profile web remove dsh-simple-wiki-memory
+```
 
-## Permission note
+Removing the plugin stops the runtime hooks (auto-commit, pending report) but **keeps your data**: `~/.dsh/AGENTS.md` and `~/.dsh/workspace/` are not deleted. The six-rule convention stays in AGENTS.md (it is plain text the agent follows); delete that section manually if you want it gone.
 
-Reading memory works in **any** sandbox mode (reads are never sandboxed in DSH). Writing to `~/.dsh/workspace/` requires `danger-full-access`, or `workspace-write` with per-call approval escalation.
+## Quick start
+
+1. Install (above); the vault is scaffolded automatically on first startup.
+2. In any session, ask the agent to remember something — it writes to `pending/`.
+3. Say **"存档/确认"** to promote pending drafts into confirmed memory.
+4. Say **"整理记忆"** to trigger the reorganization workflow (you approve before it executes).
+5. The bundled **`memory-query`** skill handles retrieval with the directory-scan fallback.
+
+## Configuration
+
+v0.1 has no user-facing configuration; defaults are safe. Planned (v0.2): settings section for TTL days, auto-commit on/off, memory directory path.
+
+## Permissions & data
+
+- **Files**: reads/writes `~/.dsh/AGENTS.md` and `~/.dsh/workspace/` (creates `reference/`, `pending/`, `archive/`, `memory-log.md`; merges the rules section into AGENTS.md — never overwrites your index entries).
+- **Commands**: runs `git init / add / commit` inside `~/.dsh/workspace/` (auto-backup).
+- **No network, no credentials, no telemetry.**
+- Reading memory works in **any** sandbox mode (reads are never sandboxed in DSH). Writing to `~/.dsh/workspace/` requires `danger-full-access`, or `workspace-write` with per-call approval escalation.
+
+## Troubleshooting
+
+- **Auto-commit does nothing**: check `~/.dsh/workspace/.git` exists; if git is unavailable, the plugin degrades gracefully (memory still works, just without backup).
+- **Memory not injected**: confirm `dsh-agent-instructions` is enabled in your profile/preset (it is the mechanism that auto-loads AGENTS.md).
+- **Rollback**: the vault is a git repo — `git -C ~/.dsh/workspace log` / `git -C ~/.dsh/workspace reset --hard <commit>`.
 
 ## Development
 
 ```bash
-npm install        # install peer deps for type checking
-node --check lib/index.js
+node --check lib/index.js   # syntax check
 ```
 
-The plugin follows the DSH bundle pattern (`dsh.bundle.patch` → `cordis.patch.yml`), same as `dsh-liangshen` / `dsh-vision-router`.
+Package layout: `lib/index.js` (sync + hooks), `assets/` (AGENTS.md / memory-log templates), `skills/memory-query/`. The plugin uses the DSH bundle distribution model (`dsh.bundle.patch` → `cordis.patch.yml`).
 
 ## License
 
