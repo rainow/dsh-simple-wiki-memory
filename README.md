@@ -28,7 +28,7 @@ Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**
 
 ### The six rules (all in AGENTS.md, injected into every session)
 
-1. **Write trigger** — check at session end for memorable info.
+1. **Write trigger (realtime)** — capture memorable info **as it appears** during the session; write immediately (don't wait for session end, don't silently drop it). Writing is realtime (straight into `pending/`), confirming is deferred (reported at the start of your next session) — so `/new` or closing the page never loses anything.
 2. **Admission** — unconfirmed → `pending/`; say **"save"** / **"confirm"** / **"promote"** to promote to `reference/` + update index + log. TTL: 7d (interactive) / 30d (unattended).
 3. **Unattended sessions** (task-board timers, background subagents) — write `pending/` only, never promote themselves.
 4. **Periodic cleanup** — say **"organize memory"** → agent proposes reorganization (split/merge/rename/archive), you approve, outdated content goes to `archive/`.
