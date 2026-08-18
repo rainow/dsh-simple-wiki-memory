@@ -1,0 +1,13 @@
+# dsh-simple-wiki-memory (DSWM) bundle patch.
+# Applied automatically when the package is installed (package.json declares
+# `dsh.bundle.patch`). The node half runs in the host process and on startup:
+#   - syncs the AGENTS.md six-rule skeleton into ~/.dsh/AGENTS.md (merge-only),
+#   - scaffolds ~/.dsh/workspace/{reference,pending,archive}/ + memory-log.md,
+#   - git-inits the workspace for backup/rollback,
+#   - auto-commits memory changes after turns,
+#   - reports pending (unconfirmed) memory at the start of a user turn.
+#
+# Install: dsh plugin --profile web add github:<owner>/dsh-simple-wiki-memory
+- insert:
+    - id: dswm
+      name: dsh-simple-wiki-memory

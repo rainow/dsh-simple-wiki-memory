@@ -1,0 +1,9 @@
+# 记忆操作日志（memory-log）
+
+追加式日志：每次写入/更新/晋升/归档记忆时，在末尾追加一行。用于审计轨迹、暴露并发冲突、判断记忆新鲜度。
+
+格式：`YYYY-MM-DD HH:MM | 动作 | 目标文件 | 说明（可选）`
+动作：`create`（新建 reference）/ `update`（更新 reference）/ `stage`（写入 pending）/ `promote`（pending→reference）/ `archive`（归档）/ `organize`（整理重组）/ `checkpoint`（git 提交）
+
+---
+
