@@ -43,12 +43,10 @@ Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**
 
 ## Install
 
-```bash
-# from GitHub
-dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory
+> **Note**: only GitHub installation is available for now — this package is **not yet published to npm**.
 
-# or from npm once published
-dsh plugin --profile web add dsh-simple-wiki-memory
+```bash
+dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory
 ```
 
 First startup syncs the skeleton, scaffolds the vault, and git-inits `workspace/` — idempotent, merge-only, never clobbers your existing `~/.dsh/AGENTS.md` index entries.

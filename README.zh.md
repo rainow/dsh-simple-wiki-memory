@@ -43,12 +43,10 @@ DSH 在**每个会话第一个请求前**自动注入 `~/.dsh/AGENTS.md`（记�
 
 ## 安装
 
-```bash
-# 从 GitHub
-dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory
+> **注意**：目前仅支持 GitHub 安装——本包**尚未发布到 npm**。
 
-# 或发布到 npm 后
-dsh plugin --profile web add dsh-simple-wiki-memory
+```bash
+dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory
 ```
 
 首次启动自动：同步 AGENTS.md 骨架、创建 vault 目录、git init `workspace/`。**幂等、只合并、绝不覆盖**你已有的 `~/.dsh/AGENTS.md` 索引条目。
