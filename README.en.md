@@ -28,6 +28,12 @@ Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**
     └── memory-log.md      # append-only operation log (audit + freshness)
 ```
 
+`reference/` holds one Markdown file per topic, named by topic — like this:
+
+![reference directory example](assets/reference-dir-example.png)
+
+Each file is the full detail of one topic (e.g. `DOCKER-NAS.md`, `INFRA-SERVERS.md`, `HOME-ASSISTANT-CONTROL.md`), pointed to by an index entry in `AGENTS.md`; the file is read only when the task needs it — otherwise only the small index occupies context.
+
 ### The six rules (all in AGENTS.md, injected into every session)
 
 1. **Write trigger (realtime)** — capture memorable info **as it appears** during the session; write immediately (don't wait for session end, don't silently drop it). Writing is realtime (straight into `pending/`), confirming is deferred (reported at the start of your next session) — so `/new` or closing the page never loses anything.

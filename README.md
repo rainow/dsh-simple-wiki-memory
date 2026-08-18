@@ -28,6 +28,12 @@ DSH 在**每个会话第一个请求前**自动注入 `~/.dsh/AGENTS.md`（记�
     └── memory-log.md      # 追加式操作日志（审计 + 新鲜度）
 ```
 
+`reference/` 里就是按主题命名的 md 文件，一个主题一个文件，像这样：
+
+![reference 目录示例](assets/reference-dir-example.png)
+
+每个文件是一个主题的完整细节（如 `DOCKER-NAS.md`、`INFRA-SERVERS.md`、`HOME-ASSISTANT-CONTROL.md`），由 `AGENTS.md` 索引条目指向；任务需要时才 read 对应文件，平时只加载索引，不占上下文。
+
 ### 六条规则（全在 AGENTS.md，注入每个会话）
 
 1. **写入触发（实时捕捉）** — 会话过程中产生值得记住的信息**立即**写入（不等待会话结束、不默默丢弃）。写入是实时的（直接进 `pending/`），确认是延迟的（下次会话开始时汇报）——`/new` 或关闭页面都不会丢失。
