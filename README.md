@@ -49,6 +49,18 @@ DSH 在**每个会话第一个请求前**自动注入 `~/.dsh/AGENTS.md`（记�
 - 最后验证日期：2026-08-18。
 - 依赖 DSH 原生 `dsh-agent-instructions` 机制（`dsh-base` bundle 默认启用）；若你的部署禁用了它，记忆注入将不生效。
 
+### 与锚定模式的已知冲突（liangshen / Anchored Standard）
+
+**liangshen 模式**（梁神模式）和 **Anchored Standard 模式**会在会话首轮清空运行时上下文、只保留你的直接消息，从而**屏蔽 `dsh-agent-instructions` 对 `~/.dsh/AGENTS.md` 的自动注入**。DSWM 的记忆索引与六条规则正是靠这个注入生效的，因此在上述模式下，会话开头不会自动加载记忆。
+
+这不是 bug，而是锚定模式的**刻意设计**（用最小上下文锚定推理轨迹）。解决方式很简单：
+
+- 需要读取/维护记忆时，**手动让 agent 读 `AGENTS.md`** 即可，例如说：
+  - `先读一下 ~/.dsh/AGENTS.md 再开始`
+  - 或直接说 `按 AGENTS.md 里的记忆规则处理`
+- liangshen 模式在首块锚定晋升（进入"we can"模式）后，也**可以**手动让 agent 读 `AGENTS.md`，之后记忆规则即按 DSWM 正常运作。
+- 其余会话（非锚定模式）不受影响，记忆照常自动注入。
+
 ## 安装
 
 > **注意**：目前仅支持 GitHub 安装——本包**尚未发布到 npm**。

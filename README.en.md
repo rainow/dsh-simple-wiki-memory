@@ -49,6 +49,18 @@ Each file is the full detail of one topic (e.g. `DOCKER-NAS.md`, `INFRA-SERVERS.
 - Last verified: 2026-08-18.
 - Requires the native `dsh-agent-instructions` mechanism (enabled by default in the `dsh-base` bundle); if your deployment disables it, memory injection will not work.
 
+### Known conflict with anchored modes (liangshen / Anchored Standard)
+
+**liangshen mode** and **Anchored Standard mode** clear the runtime context on the first turn and keep only your direct message, which **suppresses the automatic `~/.dsh/AGENTS.md` injection** performed by `dsh-agent-instructions`. DSWM's memory index and six-rule convention rely on that injection, so in these modes memory is not auto-loaded at the start of a session.
+
+This is not a bug — it is the **deliberate design** of anchored modes (anchoring the reasoning trajectory to a minimal context). The fix is simple:
+
+- When you need to read/maintain memory, **ask the agent to read `AGENTS.md` manually**, e.g.:
+  - `Read ~/.dsh/AGENTS.md first, then continue`
+  - or simply `Follow the memory rules in AGENTS.md`
+- In liangshen mode, after the first-block anchoring promotes (entering "we can" mode), you can also ask the agent to read `AGENTS.md` manually, and the memory rules then work normally with DSWM.
+- Other (non-anchored) sessions are unaffected — memory is auto-injected as usual.
+
 ## Install
 
 > **Note**: only GitHub installation is available for now — this package is **not yet published to npm**.
