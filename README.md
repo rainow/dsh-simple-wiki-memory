@@ -45,8 +45,8 @@ DSH 在**每个会话第一个请求前**自动注入 `~/.dsh/AGENTS.md`（记�
 
 ## 兼容性
 
-- 已用 DSH 10.33.0（web profile，`dsh-agent-instructions` 基线注入）验证。
-- 最后验证日期：2026-08-18。
+- 已用 DSH **0.1.1-rc.2**（web profile，`dsh-agent-instructions` 基线注入）验证；peerDependencies 同时覆盖 `0.1.0-rc.7+` 与 `0.1.1-rc.2+` 两条发布线。
+- 最后验证日期：2026-08-25。
 - 依赖 DSH 原生 `dsh-agent-instructions` 机制（`dsh-base` bundle 默认启用）；若你的部署禁用了它，记忆注入将不生效。
 
 ### 与锚定模式的已知冲突（liangshen / Anchored Standard）
