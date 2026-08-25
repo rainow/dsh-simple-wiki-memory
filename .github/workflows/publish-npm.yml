@@ -1,0 +1,39 @@
+name: publish-npm
+
+# Publish dsh-simple-wiki-memory to the npm registry on GitHub's
+# infrastructure (registry.npmjs.org is unreachable from mainland networks;
+# publishing via Actions makes releases reproducible and automatic).
+#
+# Trigger:
+#   - push a `v*` tag (e.g. `git tag v0.1.1 && git push origin v0.1.1`), or
+#   - run this workflow manually (Actions tab -> publish-npm -> Run workflow).
+#
+# Secret required once:
+#   Settings -> Secrets and variables -> Actions -> New repository secret
+#   Name: NPM_TOKEN  Value: an npm publish (automation) token from
+#   https://www.npmjs.com/settings/<user>/tokens
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      # Plain ESM package, no build step. `files` in package.json already
+      # ships lib/ + assets/ + skills/ + cordis.patch.yml.
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
