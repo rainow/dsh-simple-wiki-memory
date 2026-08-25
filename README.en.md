@@ -63,15 +63,21 @@ This is not a bug — it is the **deliberate design** of anchored modes (anchori
 
 ## Install
 
-> **Note**: only GitHub installation is available for now — this package is **not yet published to npm**.
+**Option 1: npm (recommended — auto-updates)**
 
-**Option 1: command line**
+```bash
+dsh plugin --profile web add dsh-simple-wiki-memory
+```
+
+> Published to npm. The dsh-market plugin market shows the version and detects updates automatically (new releases prompt after a one-day safety window); you can also pull the latest manually with the same command at any time.
+
+**Option 2: GitHub (source install)**
 
 ```bash
 dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory
 ```
 
-**Option 2: let an agent install it**
+**Option 3: let an agent install it**
 
 Just paste the link below into a DSH session and ask the agent to install it for you:
 
@@ -79,7 +85,7 @@ Just paste the link below into a DSH session and ask the agent to install it for
 https://github.com/rainow/dsh-simple-wiki-memory
 ```
 
-> The agent will run `dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory` and complete the first-time sync.
+> The agent will run `dsh plugin --profile web add dsh-simple-wiki-memory` and complete the first-time sync.
 
 First startup syncs the skeleton, scaffolds the vault, and git-inits `workspace/` — idempotent, merge-only, never clobbers your existing `~/.dsh/AGENTS.md` index entries.
 
