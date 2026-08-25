@@ -3,6 +3,15 @@
   "version": "0.1.1",
   "description": "DSWM — Simple Wiki Memory for DeepSeek Harness: a self-maintaining persistent memory system (index + reference/pending/archive + git backup + memory skills).",
   "license": "MIT",
+  "author": "rainow",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rainow/dsh-simple-wiki-memory.git"
+  },
+  "homepage": "https://github.com/rainow/dsh-simple-wiki-memory",
+  "bugs": {
+    "url": "https://github.com/rainow/dsh-simple-wiki-memory/issues"
+  },
   "main": "lib/index.js",
   "type": "module",
   "exports": {
@@ -15,7 +24,8 @@
   "files": [
     "lib",
     "assets",
-    "skills"
+    "skills",
+    "cordis.patch.yml"
   ],
   "dsh": {
     "bundle": {
