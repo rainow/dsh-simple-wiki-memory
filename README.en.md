@@ -45,8 +45,8 @@ Each file is the full detail of one topic (e.g. `DOCKER-NAS.md`, `INFRA-SERVERS.
 
 ## Compatibility
 
-- Tested with DSH **0.1.1-rc.2** (web profile, `dsh-agent-instructions` baseline injection); peerDependencies cover both the `0.1.0-rc.7+` and `0.1.1-rc.2+` release lines.
-- Last verified: 2026-08-25.
+- Tested with DSH **0.1.2-alpha.2** (web profile, `dsh-agent-instructions` baseline injection; 0.1.1-rc.2 also verified); peerDependencies cover the `0.1.0-rc.7+`, `0.1.1-rc.2+` and `0.1.2-alpha.1+` release lines.
+- Last verified: 2026-08-28.
 - Requires the native `dsh-agent-instructions` mechanism (enabled by default in the `dsh-base` bundle); if your deployment disables it, memory injection will not work.
 
 ### Known conflict with anchored modes (liangshen / Anchored Standard)
