@@ -6,6 +6,26 @@ A self-maintaining persistent memory system for [DeepSeek Harness](https://githu
 
 > 简体中文（默认）见 [README.md](README.md) · English: this file.
 
+## Changelog
+
+### v0.1.2 (2026-08-28) — DSH 0.1.2-alpha compatibility
+
+- **Compatible with DSH 0.1.2-alpha.1 / 0.1.2-alpha.2** (current latest alpha): peerDependencies extended to `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`, covering the `0.1.0-rc.7+`, `0.1.1-rc.2+` and `0.1.2-alpha.1+` release lines;
+- Runtime APIs (`session/event`, `agent/pre-step`, message construction, cordis patch, …) verified against the `dsh-v0.1.2-alpha.2` source — **no breaking changes**;
+- Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory` (npm source always resolves the latest).
+
+### v0.1.1 (2026-08-25) — first npm release
+
+- Published to npm (`dsh-simple-wiki-memory`) — dsh-market now shows the version and detects updates automatically; added a GitHub Actions auto-publish workflow (push a `v*` tag to release);
+- DSH 0.1.1-rc.2 support: peerDependencies cover the `0.1.0-rc.7+` and `0.1.1-rc.2+` lines;
+- Documented the known conflict with the liangshen / Anchored Standard anchored modes.
+
+### v0.1.0 (2026-08-18) — initial release
+
+- Six-rule memory system: auto-injected index + one markdown file per topic read on demand; pending → reference → archive zones + memory-log audit + git auto-backup;
+- Runtime hooks: auto-commit after each turn, pending report at session start;
+- AGENTS.md is merge-only (never overwrites); uninstall keeps all your data.
+
 ## Overview — what problem does this solve?
 
 **Long-term memory without the token tax.** If you dump all your memory into the prompt, a large memory costs a fortune in tokens every session. DSWM loads only the **index** (small, auto-injected every session); the actual topic files are read **on demand** when a task needs them.

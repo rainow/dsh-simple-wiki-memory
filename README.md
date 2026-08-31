@@ -6,6 +6,26 @@
 
 > English: [README.en.md](README.en.md).
 
+## 更新记录
+
+### v0.1.2（2026-08-28）— 兼容 DSH 0.1.2-alpha
+
+- **适配 DSH 0.1.2-alpha.1 / 0.1.2-alpha.2**（当前最新 alpha）：peerDependencies 扩展为 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`，覆盖 `0.1.0-rc.7+` / `0.1.1-rc.2+` / `0.1.2-alpha.1+` 三条发布线；
+- 运行时 API（`session/event`、`agent/pre-step`、消息构造、cordis patch 等）已对照 `dsh-v0.1.2-alpha.2` 源码逐项验证，**无破坏性变更**；
+- 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`（npm 源自动取最新版）。
+
+### v0.1.1（2026-08-25）— 首个 npm 发布
+
+- 发布到 npm（`dsh-simple-wiki-memory`），支持 dsh-market 版本显示与自动更新；新增 GitHub Actions 自动发布（打 `v*` tag 即发布）；
+- 适配 DSH 0.1.1-rc.2：peerDependencies 覆盖 `0.1.0-rc.7+` 与 `0.1.1-rc.2+`；
+- README 补充与 liangshen / Anchored Standard 锚定模式的兼容性说明。
+
+### v0.1.0（2026-08-18）— 初始版本
+
+- 六分支记忆规则系统：索引自动注入 + 每主题一个 md 按需读取；pending → reference → archive 三区 + memory-log 审计 + git 自动备份；
+- 运行时钩子：回合结束自动 commit、会话开始 pending 汇报；
+- AGENTS.md 只合并不覆盖，卸载保留全部数据。
+
 ## 简介 — 解决什么问题？
 
 **长期记忆多但不费 token。** 如果把所有记忆一股脑塞进提示词，记忆越多每个会话烧的 token 越贵。DSWM 默认只加载**索引**（小、每个会话自动注入），主题文件在任务需要时**按需读取**。
