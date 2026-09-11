@@ -8,9 +8,16 @@
 
 ## 更新记录
 
+### v0.1.3（2026-09-10）— 兼容 DSH 0.1.5-rc（含 0.1.3）
+
+- **适配 DSH 0.1.5-rc.2 / 0.1.5-rc.1 / 0.1.5-alpha.x / 0.1.3-alpha.x**：peerDependencies 扩展为 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1 || ^0.1.3-alpha.1 || ^0.1.5-alpha.1`，覆盖五条发布线（老版本用户不受影响）；
+- 逐项对照 `dsh-v0.1.5-rc.2` 源码验证：`session/event` + `turn/end`、`agent/pre-step`（agent 注入与决策形状不变）、`createUserMessage`、cordis 4.0.2 `prepend`、patch `insert`、`dsh.bundle.patch` —— 全部兼容；
+- **已确认 DSWM 不受 0.1.3/0.1.5 的破坏性变更影响**：0.1.3 的 Session persistence `SessionHandle` 重构、0.1.5 的「移除 `ctx.agent`」与 Web 插件面板 Slot 迁移，DSWM 均未使用（只用 `session/event` 与 `agent/pre-step` 两个钩子）；
+- 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`。
+
 ### v0.1.2（2026-08-28）— 兼容 DSH 0.1.2-alpha
 
-- **适配 DSH 0.1.2-alpha.1 / 0.1.2-alpha.2**（当前最新 alpha）：peerDependencies 扩展为 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`，覆盖 `0.1.0-rc.7+` / `0.1.1-rc.2+` / `0.1.2-alpha.1+` 三条发布线；
+- **适配 DSH 0.1.2-alpha.1 / 0.1.2-alpha.2**：peerDependencies 扩展为 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`，覆盖 `0.1.0-rc.7+` / `0.1.1-rc.2+` / `0.1.2-alpha.1+` 三条发布线；
 - 运行时 API（`session/event`、`agent/pre-step`、消息构造、cordis patch 等）已对照 `dsh-v0.1.2-alpha.2` 源码逐项验证，**无破坏性变更**；
 - 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`（npm 源自动取最新版）。
 
@@ -65,8 +72,8 @@ DSH 在**每个会话第一个请求前**自动注入 `~/.dsh/AGENTS.md`（记�
 
 ## 兼容性
 
-- 已用 DSH **0.1.2-alpha.2**（web profile，`dsh-agent-instructions` 基线注入）验证（0.1.1-rc.2 亦验证过）；peerDependencies 覆盖 `0.1.0-rc.7+` / `0.1.1-rc.2+` / `0.1.2-alpha.1+` 三条发布线。
-- 最后验证日期：2026-08-28。
+- 已用 DSH **0.1.5-rc.2**（源码对照验证）与 **0.1.1-rc.2**（web profile 实测）验证；peerDependencies 覆盖 `0.1.0-rc.7+` / `0.1.1-rc.2+` / `0.1.2-alpha.1+` / `0.1.3-alpha.1+` / `0.1.5-alpha.1+` 五条发布线。
+- 最后验证日期：2026-09-10。
 - 依赖 DSH 原生 `dsh-agent-instructions` 机制（`dsh-base` bundle 默认启用）；若你的部署禁用了它，记忆注入将不生效。
 
 ### 与锚定模式的已知冲突（liangshen / Anchored Standard）

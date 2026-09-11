@@ -8,9 +8,16 @@ A self-maintaining persistent memory system for [DeepSeek Harness](https://githu
 
 ## Changelog
 
+### v0.1.3 (2026-09-10) — DSH 0.1.5-rc compatibility (incl. 0.1.3)
+
+- **Compatible with DSH 0.1.5-rc.2 / 0.1.5-rc.1 / 0.1.5-alpha.x / 0.1.3-alpha.x**: peerDependencies extended to `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1 || ^0.1.3-alpha.1 || ^0.1.5-alpha.1`, covering five release lines (older installs keep working);
+- Verified item by item against the `dsh-v0.1.5-rc.2` source: `session/event` + `turn/end`, `agent/pre-step` (agent injection and decision shape unchanged), `createUserMessage`, cordis 4.0.2 `prepend`, patch `insert`, `dsh.bundle.patch` — all compatible;
+- **DSWM is unaffected by the 0.1.3/0.1.5 breaking changes**: the 0.1.3 session-persistence `SessionHandle` refactor, the 0.1.5 removal of `ctx.agent`, and the Web plugin panel slot migration are all unused by DSWM (it only hooks `session/event` and `agent/pre-step`);
+- Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory`.
+
 ### v0.1.2 (2026-08-28) — DSH 0.1.2-alpha compatibility
 
-- **Compatible with DSH 0.1.2-alpha.1 / 0.1.2-alpha.2** (current latest alpha): peerDependencies extended to `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`, covering the `0.1.0-rc.7+`, `0.1.1-rc.2+` and `0.1.2-alpha.1+` release lines;
+- **Compatible with DSH 0.1.2-alpha.1 / 0.1.2-alpha.2**: peerDependencies extended to `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`, covering the `0.1.0-rc.7+`, `0.1.1-rc.2+` and `0.1.2-alpha.1+` release lines;
 - Runtime APIs (`session/event`, `agent/pre-step`, message construction, cordis patch, …) verified against the `dsh-v0.1.2-alpha.2` source — **no breaking changes**;
 - Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory` (npm source always resolves the latest).
 
@@ -65,8 +72,8 @@ Each file is the full detail of one topic (e.g. `DOCKER-NAS.md`, `INFRA-SERVERS.
 
 ## Compatibility
 
-- Tested with DSH **0.1.2-alpha.2** (web profile, `dsh-agent-instructions` baseline injection; 0.1.1-rc.2 also verified); peerDependencies cover the `0.1.0-rc.7+`, `0.1.1-rc.2+` and `0.1.2-alpha.1+` release lines.
-- Last verified: 2026-08-28.
+- Verified against DSH **0.1.5-rc.2** (source-level review) and **0.1.1-rc.2** (live web profile); peerDependencies cover the `0.1.0-rc.7+`, `0.1.1-rc.2+`, `0.1.2-alpha.1+`, `0.1.3-alpha.1+` and `0.1.5-alpha.1+` release lines.
+- Last verified: 2026-09-10.
 - Requires the native `dsh-agent-instructions` mechanism (enabled by default in the `dsh-base` bundle); if your deployment disables it, memory injection will not work.
 
 ### Known conflict with anchored modes (liangshen / Anchored Standard)
