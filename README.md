@@ -8,6 +8,15 @@
 
 ## 更新记录
 
+### v0.2.0（2026-10-19）— 兼容 DSH 0.2.x
+
+- **适配 DSH 0.2.1-rc.2 / 0.2.1-alpha.x / 0.2.0-rc.x，以及 0.1.6 / 0.1.7**：新增 `engines.dsh` 声明 `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`，peerDependencies 同步扩展到九条发布线；
+- **重要：DSH 0.2 起会强制校验插件版本要求**——`engines.dsh`（优先）或 peerDependencies 不满足时，**会直接阻止插件安装与激活**。旧版 DSWM（≤0.1.3）在 0.2.x 上会被拦截，必须升级到本版；
+- **修复 0.2 的破坏性变更**：DSH 0.2 移除了共享的 `plugin` 消息来源类型（"there is no shared catch-all `plugin` kind"），改为每个生产者通过 `MessageSourceMap` 声明自己的 kind。DSWM 现声明并使用自己的 `dswm` kind（`lib/types/index.d.ts` 含类型扩展，运行时消费者对未知 kind 自动透传）；
+- 逐项对照 `dsh-v0.2.1-rc.2` 源码验证：`session/event` + `turn/end`、`agent/pre-step`（agent 注入与 `{kind:'enter', messages}` 决策形状不变）、`createUserMessage`、cordis 4.0.5 `prepend`、patch `insert`、`dsh.bundle.patch` —— 全部兼容；
+- 已用 DSH 0.2.1-rc.2 **真实兼容性判定函数实测**：0.1.0-rc.8 ~ 0.2.1-rc.2 全部通过（0.3.x 暂不声明，届时会提示升级，可用 `dsh plugin allow-version` 临时豁免）；
+- 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`。
+
 ### v0.1.3（2026-09-10）— 兼容 DSH 0.1.5-rc（含 0.1.3）
 
 - **适配 DSH 0.1.5-rc.2 / 0.1.5-rc.1 / 0.1.5-alpha.x / 0.1.3-alpha.x**：peerDependencies 扩展为 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1 || ^0.1.3-alpha.1 || ^0.1.5-alpha.1`，覆盖五条发布线（老版本用户不受影响）；
@@ -72,8 +81,9 @@ DSH 在**每个会话第一个请求前**自动注入 `~/.dsh/AGENTS.md`（记�
 
 ## 兼容性
 
-- 已用 DSH **0.1.5-rc.2**（源码对照验证）与 **0.1.1-rc.2**（web profile 实测）验证；peerDependencies 覆盖 `0.1.0-rc.7+` / `0.1.1-rc.2+` / `0.1.2-alpha.1+` / `0.1.3-alpha.1+` / `0.1.5-alpha.1+` 五条发布线。
-- 最后验证日期：2026-09-10。
+- 已用 DSH **0.2.1-rc.2**（`dsh-v0.2.1-rc.2` 源码对照 + 官方兼容性判定函数实测）验证；另兼容 0.1.0-rc.7 起的全部 0.1.x / 0.2.x 发布线。
+- 兼容声明：`engines.dsh` = `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`。DSH 0.2+ 会据此阻止不满足要求的版本安装/激活；0.3.x 未声明（届时需升级 DSWM，或临时用 `dsh plugin allow-version` 豁免）。
+- 最后验证日期：2026-10-19。
 - 依赖 DSH 原生 `dsh-agent-instructions` 机制（`dsh-base` bundle 默认启用）；若你的部署禁用了它，记忆注入将不生效。
 
 ### 与锚定模式的已知冲突（liangshen / Anchored Standard）

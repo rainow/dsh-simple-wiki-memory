@@ -8,6 +8,15 @@ A self-maintaining persistent memory system for [DeepSeek Harness](https://githu
 
 ## Changelog
 
+### v0.2.0 (2026-10-19) — DSH 0.2.x compatibility
+
+- **Compatible with DSH 0.2.1-rc.2 / 0.2.1-alpha.x / 0.2.0-rc.x, plus 0.1.6 / 0.1.7**: added an `engines.dsh` declaration `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0` and extended peerDependencies to nine release lines;
+- **Important: DSH 0.2+ now enforces plugin version requirements** — when `engines.dsh` (preferred) or peerDependencies are unmet, the plugin is **blocked from installation and activation**. Older DSWM (≤0.1.3) is rejected on 0.2.x, so upgrading to this release is required;
+- **Fixed a DSH 0.2 breaking change**: DSH 0.2 removed the shared `plugin` message source kind ("there is no shared catch-all `plugin` kind") in favour of per-producer `MessageSourceMap` augmentation. DSWM now declares and uses its own `dswm` kind (`lib/types/index.d.ts` carries the type extension; runtime consumers fall through unknown kinds);
+- Verified item by item against the `dsh-v0.2.1-rc.2` source: `session/event` + `turn/end`, `agent/pre-step` (agent injection and `{kind:'enter', messages}` decision shape unchanged), `createUserMessage`, cordis 4.0.5 `prepend`, patch `insert`, `dsh.bundle.patch` — all compatible;
+- Checked with the **real compatibility evaluator from DSH 0.2.1-rc.2**: 0.1.0-rc.8 through 0.2.1-rc.2 all pass (0.3.x is not declared yet — it will prompt for an upgrade, or can be exempted temporarily with `dsh plugin allow-version`);
+- Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory`.
+
 ### v0.1.3 (2026-09-10) — DSH 0.1.5-rc compatibility (incl. 0.1.3)
 
 - **Compatible with DSH 0.1.5-rc.2 / 0.1.5-rc.1 / 0.1.5-alpha.x / 0.1.3-alpha.x**: peerDependencies extended to `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1 || ^0.1.3-alpha.1 || ^0.1.5-alpha.1`, covering five release lines (older installs keep working);
@@ -72,8 +81,9 @@ Each file is the full detail of one topic (e.g. `DOCKER-NAS.md`, `INFRA-SERVERS.
 
 ## Compatibility
 
-- Verified against DSH **0.1.5-rc.2** (source-level review) and **0.1.1-rc.2** (live web profile); peerDependencies cover the `0.1.0-rc.7+`, `0.1.1-rc.2+`, `0.1.2-alpha.1+`, `0.1.3-alpha.1+` and `0.1.5-alpha.1+` release lines.
-- Last verified: 2026-09-10.
+- Verified against DSH **0.2.1-rc.2** (source-level review of `dsh-v0.2.1-rc.2` plus the official compatibility evaluator); also compatible with every 0.1.x / 0.2.x line from 0.1.0-rc.7 onward.
+- Compatibility declaration: `engines.dsh` = `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`. DSH 0.2+ uses it to block installation/activation of incompatible versions; 0.3.x is not declared yet (upgrade DSWM when it lands, or exempt temporarily with `dsh plugin allow-version`).
+- Last verified: 2026-10-19.
 - Requires the native `dsh-agent-instructions` mechanism (enabled by default in the `dsh-base` bundle); if your deployment disables it, memory injection will not work.
 
 ### Known conflict with anchored modes (liangshen / Anchored Standard)
