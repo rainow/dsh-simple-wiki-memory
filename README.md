@@ -6,7 +6,7 @@
 
 > English: [README.en.md](README.en.md).
 
-## 更新记录
+## 最近更新
 
 ### v0.2.0（2026-10-19）— 兼容 DSH 0.2.x
 
@@ -17,30 +17,7 @@
 - 已用 DSH 0.2.1-rc.2 **真实兼容性判定函数实测**：0.1.0-rc.8 ~ 0.2.1-rc.2 全部通过（0.3.x 暂不声明，届时会提示升级，可用 `dsh plugin allow-version` 临时豁免）；
 - 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`。
 
-### v0.1.3（2026-09-10）— 兼容 DSH 0.1.5-rc（含 0.1.3）
-
-- **适配 DSH 0.1.5-rc.2 / 0.1.5-rc.1 / 0.1.5-alpha.x / 0.1.3-alpha.x**：peerDependencies 扩展为 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1 || ^0.1.3-alpha.1 || ^0.1.5-alpha.1`，覆盖五条发布线（老版本用户不受影响）；
-- 逐项对照 `dsh-v0.1.5-rc.2` 源码验证：`session/event` + `turn/end`、`agent/pre-step`（agent 注入与决策形状不变）、`createUserMessage`、cordis 4.0.2 `prepend`、patch `insert`、`dsh.bundle.patch` —— 全部兼容；
-- **已确认 DSWM 不受 0.1.3/0.1.5 的破坏性变更影响**：0.1.3 的 Session persistence `SessionHandle` 重构、0.1.5 的「移除 `ctx.agent`」与 Web 插件面板 Slot 迁移，DSWM 均未使用（只用 `session/event` 与 `agent/pre-step` 两个钩子）；
-- 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`。
-
-### v0.1.2（2026-08-28）— 兼容 DSH 0.1.2-alpha
-
-- **适配 DSH 0.1.2-alpha.1 / 0.1.2-alpha.2**：peerDependencies 扩展为 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`，覆盖 `0.1.0-rc.7+` / `0.1.1-rc.2+` / `0.1.2-alpha.1+` 三条发布线；
-- 运行时 API（`session/event`、`agent/pre-step`、消息构造、cordis patch 等）已对照 `dsh-v0.1.2-alpha.2` 源码逐项验证，**无破坏性变更**；
-- 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`（npm 源自动取最新版）。
-
-### v0.1.1（2026-08-25）— 首个 npm 发布
-
-- 发布到 npm（`dsh-simple-wiki-memory`），支持 dsh-market 版本显示与自动更新；新增 GitHub Actions 自动发布（打 `v*` tag 即发布）；
-- 适配 DSH 0.1.1-rc.2：peerDependencies 覆盖 `0.1.0-rc.7+` 与 `0.1.1-rc.2+`；
-- README 补充与 liangshen / Anchored Standard 锚定模式的兼容性说明。
-
-### v0.1.0（2026-08-18）— 初始版本
-
-- 六分支记忆规则系统：索引自动注入 + 每主题一个 md 按需读取；pending → reference → archive 三区 + memory-log 审计 + git 自动备份；
-- 运行时钩子：回合结束自动 commit、会话开始 pending 汇报；
-- AGENTS.md 只合并不覆盖，卸载保留全部数据。
+> 完整历史见文末 [完整更新记录](#完整更新记录)。
 
 ## 简介 — 解决什么问题？
 
@@ -170,6 +147,42 @@ node --check lib/index.js   # 语法检查
 ```
 
 包结构：`lib/index.js`（同步 + 钩子）、`assets/`（AGENTS.md / memory-log 模板）、`skills/memory-query/`。采用 DSH bundle 分发模型（`dsh.bundle.patch` → `cordis.patch.yml`）。
+
+## 完整更新记录
+
+### v0.2.0（2026-10-19）— 兼容 DSH 0.2.x
+
+- **适配 DSH 0.2.1-rc.2 / 0.2.1-alpha.x / 0.2.0-rc.x，以及 0.1.6 / 0.1.7**：新增 `engines.dsh` 声明 `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`，peerDependencies 同步扩展到九条发布线；
+- **重要：DSH 0.2 起会强制校验插件版本要求**——`engines.dsh`（优先）或 peerDependencies 不满足时，**会直接阻止插件安装与激活**。旧版 DSWM（≤0.1.3）在 0.2.x 上会被拦截，必须升级到本版；
+- **修复 0.2 的破坏性变更**：DSH 0.2 移除了共享的 `plugin` 消息来源类型（"there is no shared catch-all `plugin` kind"），改为每个生产者通过 `MessageSourceMap` 声明自己的 kind。DSWM 现声明并使用自己的 `dswm` kind（`lib/types/index.d.ts` 含类型扩展，运行时消费者对未知 kind 自动透传）；
+- 逐项对照 `dsh-v0.2.1-rc.2` 源码验证：`session/event` + `turn/end`、`agent/pre-step`（agent 注入与 `{kind:'enter', messages}` 决策形状不变）、`createUserMessage`、cordis 4.0.5 `prepend`、patch `insert`、`dsh.bundle.patch` —— 全部兼容；
+- 已用 DSH 0.2.1-rc.2 **真实兼容性判定函数实测**：0.1.0-rc.8 ~ 0.2.1-rc.2 全部通过（0.3.x 暂不声明，届时会提示升级，可用 `dsh plugin allow-version` 临时豁免）；
+- 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`。
+
+### v0.1.3（2026-09-10）— 兼容 DSH 0.1.5-rc（含 0.1.3）
+
+- **适配 DSH 0.1.5-rc.2 / 0.1.5-rc.1 / 0.1.5-alpha.x / 0.1.3-alpha.x**：peerDependencies 扩展为 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1 || ^0.1.3-alpha.1 || ^0.1.5-alpha.1`，覆盖五条发布线（老版本用户不受影响）；
+- 逐项对照 `dsh-v0.1.5-rc.2` 源码验证：`session/event` + `turn/end`、`agent/pre-step`（agent 注入与决策形状不变）、`createUserMessage`、cordis 4.0.2 `prepend`、patch `insert`、`dsh.bundle.patch` —— 全部兼容；
+- **已确认 DSWM 不受 0.1.3/0.1.5 的破坏性变更影响**：0.1.3 的 Session persistence `SessionHandle` 重构、0.1.5 的「移除 `ctx.agent`」与 Web 插件面板 Slot 迁移，DSWM 均未使用（只用 `session/event` 与 `agent/pre-step` 两个钩子）；
+- 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`。
+
+### v0.1.2（2026-08-28）— 兼容 DSH 0.1.2-alpha
+
+- **适配 DSH 0.1.2-alpha.1 / 0.1.2-alpha.2**：peerDependencies 扩展为 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`，覆盖 `0.1.0-rc.7+` / `0.1.1-rc.2+` / `0.1.2-alpha.1+` 三条发布线；
+- 运行时 API（`session/event`、`agent/pre-step`、消息构造、cordis patch 等）已对照 `dsh-v0.1.2-alpha.2` 源码逐项验证，**无破坏性变更**；
+- 安装/升级：`dsh plugin --profile web add dsh-simple-wiki-memory`（npm 源自动取最新版）。
+
+### v0.1.1（2026-08-25）— 首个 npm 发布
+
+- 发布到 npm（`dsh-simple-wiki-memory`），支持 dsh-market 版本显示与自动更新；新增 GitHub Actions 自动发布（打 `v*` tag 即发布）；
+- 适配 DSH 0.1.1-rc.2：peerDependencies 覆盖 `0.1.0-rc.7+` 与 `0.1.1-rc.2+`；
+- README 补充与 liangshen / Anchored Standard 锚定模式的兼容性说明。
+
+### v0.1.0（2026-08-18）— 初始版本
+
+- 六分支记忆规则系统：索引自动注入 + 每主题一个 md 按需读取；pending → reference → archive 三区 + memory-log 审计 + git 自动备份；
+- 运行时钩子：回合结束自动 commit、会话开始 pending 汇报；
+- AGENTS.md 只合并不覆盖，卸载保留全部数据。
 
 ## License
 

@@ -6,7 +6,7 @@ A self-maintaining persistent memory system for [DeepSeek Harness](https://githu
 
 > 简体中文（默认）见 [README.md](README.md) · English: this file.
 
-## Changelog
+## Latest update
 
 ### v0.2.0 (2026-10-19) — DSH 0.2.x compatibility
 
@@ -17,30 +17,7 @@ A self-maintaining persistent memory system for [DeepSeek Harness](https://githu
 - Checked with the **real compatibility evaluator from DSH 0.2.1-rc.2**: 0.1.0-rc.8 through 0.2.1-rc.2 all pass (0.3.x is not declared yet — it will prompt for an upgrade, or can be exempted temporarily with `dsh plugin allow-version`);
 - Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory`.
 
-### v0.1.3 (2026-09-10) — DSH 0.1.5-rc compatibility (incl. 0.1.3)
-
-- **Compatible with DSH 0.1.5-rc.2 / 0.1.5-rc.1 / 0.1.5-alpha.x / 0.1.3-alpha.x**: peerDependencies extended to `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1 || ^0.1.3-alpha.1 || ^0.1.5-alpha.1`, covering five release lines (older installs keep working);
-- Verified item by item against the `dsh-v0.1.5-rc.2` source: `session/event` + `turn/end`, `agent/pre-step` (agent injection and decision shape unchanged), `createUserMessage`, cordis 4.0.2 `prepend`, patch `insert`, `dsh.bundle.patch` — all compatible;
-- **DSWM is unaffected by the 0.1.3/0.1.5 breaking changes**: the 0.1.3 session-persistence `SessionHandle` refactor, the 0.1.5 removal of `ctx.agent`, and the Web plugin panel slot migration are all unused by DSWM (it only hooks `session/event` and `agent/pre-step`);
-- Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory`.
-
-### v0.1.2 (2026-08-28) — DSH 0.1.2-alpha compatibility
-
-- **Compatible with DSH 0.1.2-alpha.1 / 0.1.2-alpha.2**: peerDependencies extended to `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`, covering the `0.1.0-rc.7+`, `0.1.1-rc.2+` and `0.1.2-alpha.1+` release lines;
-- Runtime APIs (`session/event`, `agent/pre-step`, message construction, cordis patch, …) verified against the `dsh-v0.1.2-alpha.2` source — **no breaking changes**;
-- Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory` (npm source always resolves the latest).
-
-### v0.1.1 (2026-08-25) — first npm release
-
-- Published to npm (`dsh-simple-wiki-memory`) — dsh-market now shows the version and detects updates automatically; added a GitHub Actions auto-publish workflow (push a `v*` tag to release);
-- DSH 0.1.1-rc.2 support: peerDependencies cover the `0.1.0-rc.7+` and `0.1.1-rc.2+` lines;
-- Documented the known conflict with the liangshen / Anchored Standard anchored modes.
-
-### v0.1.0 (2026-08-18) — initial release
-
-- Six-rule memory system: auto-injected index + one markdown file per topic read on demand; pending → reference → archive zones + memory-log audit + git auto-backup;
-- Runtime hooks: auto-commit after each turn, pending report at session start;
-- AGENTS.md is merge-only (never overwrites); uninstall keeps all your data.
+> Full history: [Full changelog](#full-changelog) at the end of this file.
 
 ## Overview — what problem does this solve?
 
@@ -170,6 +147,42 @@ node --check lib/index.js   # syntax check
 ```
 
 Package layout: `lib/index.js` (sync + hooks), `assets/` (AGENTS.md / memory-log templates), `skills/memory-query/`. The plugin uses the DSH bundle distribution model (`dsh.bundle.patch` → `cordis.patch.yml`).
+
+## Full changelog
+
+### v0.2.0 (2026-10-19) — DSH 0.2.x compatibility
+
+- **Compatible with DSH 0.2.1-rc.2 / 0.2.1-alpha.x / 0.2.0-rc.x, plus 0.1.6 / 0.1.7**: added an `engines.dsh` declaration `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0` and extended peerDependencies to nine release lines;
+- **Important: DSH 0.2+ now enforces plugin version requirements** — when `engines.dsh` (preferred) or peerDependencies are unmet, the plugin is **blocked from installation and activation**. Older DSWM (≤0.1.3) is rejected on 0.2.x, so upgrading to this release is required;
+- **Fixed a DSH 0.2 breaking change**: DSH 0.2 removed the shared `plugin` message source kind ("there is no shared catch-all `plugin` kind") in favour of per-producer `MessageSourceMap` augmentation. DSWM now declares and uses its own `dswm` kind (`lib/types/index.d.ts` carries the type extension; runtime consumers fall through unknown kinds);
+- Verified item by item against the `dsh-v0.2.1-rc.2` source: `session/event` + `turn/end`, `agent/pre-step` (agent injection and `{kind:'enter', messages}` decision shape unchanged), `createUserMessage`, cordis 4.0.5 `prepend`, patch `insert`, `dsh.bundle.patch` — all compatible;
+- Checked with the **real compatibility evaluator from DSH 0.2.1-rc.2**: 0.1.0-rc.8 through 0.2.1-rc.2 all pass (0.3.x is not declared yet — it will prompt for an upgrade, or can be exempted temporarily with `dsh plugin allow-version`);
+- Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory`.
+
+### v0.1.3 (2026-09-10) — DSH 0.1.5-rc compatibility (incl. 0.1.3)
+
+- **Compatible with DSH 0.1.5-rc.2 / 0.1.5-rc.1 / 0.1.5-alpha.x / 0.1.3-alpha.x**: peerDependencies extended to `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1 || ^0.1.3-alpha.1 || ^0.1.5-alpha.1`, covering five release lines (older installs keep working);
+- Verified item by item against the `dsh-v0.1.5-rc.2` source: `session/event` + `turn/end`, `agent/pre-step` (agent injection and decision shape unchanged), `createUserMessage`, cordis 4.0.2 `prepend`, patch `insert`, `dsh.bundle.patch` — all compatible;
+- **DSWM is unaffected by the 0.1.3/0.1.5 breaking changes**: the 0.1.3 session-persistence `SessionHandle` refactor, the 0.1.5 removal of `ctx.agent`, and the Web plugin panel slot migration are all unused by DSWM (it only hooks `session/event` and `agent/pre-step`);
+- Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory`.
+
+### v0.1.2 (2026-08-28) — DSH 0.1.2-alpha compatibility
+
+- **Compatible with DSH 0.1.2-alpha.1 / 0.1.2-alpha.2**: peerDependencies extended to `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.1`, covering the `0.1.0-rc.7+`, `0.1.1-rc.2+` and `0.1.2-alpha.1+` release lines;
+- Runtime APIs (`session/event`, `agent/pre-step`, message construction, cordis patch, …) verified against the `dsh-v0.1.2-alpha.2` source — **no breaking changes**;
+- Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory` (npm source always resolves the latest).
+
+### v0.1.1 (2026-08-25) — first npm release
+
+- Published to npm (`dsh-simple-wiki-memory`) — dsh-market now shows the version and detects updates automatically; added a GitHub Actions auto-publish workflow (push a `v*` tag to release);
+- DSH 0.1.1-rc.2 support: peerDependencies cover the `0.1.0-rc.7+` and `0.1.1-rc.2+` lines;
+- Documented the known conflict with the liangshen / Anchored Standard anchored modes.
+
+### v0.1.0 (2026-08-18) — initial release
+
+- Six-rule memory system: auto-injected index + one markdown file per topic read on demand; pending → reference → archive zones + memory-log audit + git auto-backup;
+- Runtime hooks: auto-commit after each turn, pending report at session start;
+- AGENTS.md is merge-only (never overwrites); uninstall keeps all your data.
 
 ## License
 
