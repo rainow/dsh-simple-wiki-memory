@@ -1,123 +1,93 @@
 # DSWM — Simple Wiki Memory for DeepSeek Harness
 
-A super-simplified LLM-wiki memory plugin: one index document (auto-loaded) + one markdown file per topic (read only when needed) — no dumping everything into the context and burning tokens. Simple and lightweight, painless to install/uninstall, and freely editable however you like.
+A radically simple llm-wiki-style memory plugin with three layers, each doing one job:
 
-A self-maintaining persistent memory system for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). Built on the native `dsh-agent-instructions` (AGENTS.md) mechanism — no RAG, no vector DB, no LLM calls at runtime. Just Markdown + git.
+**① Index** — one document, auto-loaded into every session · **② Topics** — one markdown file per topic, read only when the task needs it · **③ Tools** — one markdown file per skill (named after the skill), read automatically when that skill is used
 
-> 简体中文（默认）见 [README.md](README.md) · English: this file.
+So the **index never grows with your memory count, and never grows with your tool count**. Plain Markdown + git — no RAG, no vector DB, no runtime LLM calls. Install and uninstall are painless; everything is editable by hand.
 
-## Latest update
+Built on DSH's native `dsh-agent-instructions` (AGENTS.md) mechanism.
 
-### v0.3.0 (2026-10-28) — per-tool memory + lean recording
+> Current version **v0.3.0** (2026-10-28) · [Changelog](#changelog) · 中文: [README.md](README.md)
 
-- **Per-tool memory**: stable facts about a skill or MCP server (IDs, enums, endpoints, required params) and its gotchas now live in `reference/skills/<skill-id>.md` (`mcp-<server>.md` for MCP). **Not indexed** — looked up by name right before you use the tool, so the index never grows with your tool count;
-- **Placement test before writing**: tool-specific identifiers → `skills/`; still true with another tool (taste, address, how you're addressed) → `reference/`; both → primary in `skills/` plus a pointer; unsure after a second → ask the user;
-- **Report-on-mismatch**: when a remembered fact no longer matches reality, mark it `❓unverified` first (never silently rewrite), write a pending note with the evidence, tell the user immediately, update after confirmation;
-- **Lean-recording rules (saves tokens)**: the delete test ("would removing this line cause a mistake?"), three things never to store (schema-declared / re-derivable by a query / time-varying), and budgets (per-tool 6KB/80 lines, reference 12KB, index entries 80 chars) — over budget means compress first, then ask the user for an exception; real files shrank 60–70%;
-- **Secrets red line**: memory files never store credentials (passwords, tokens, keys, ID numbers) or unrelated personal-security details;
-- **Rules versioning + upgrade notice**: the rules section carries `<!-- dswm:rules v=2 -->`. After upgrading, users on v1 (six-branch, no marker) get a **bilingual notice in the first session**: the agent reads the new template, **backs up** `AGENTS.md.bak-<date>`, merges only what changed and writes the marker back — **the plugin never rewrites your existing rules section**; it keeps reminding next session until upgraded;
-- Scaffold now creates `reference/skills/` with an `_about.md` (placement criteria + template);
-- Compatibility unchanged: `engines.dsh` still covers every 0.1.x / 0.2.x release line.
-
-> Full history in [Full changelog](#full-changelog) at the end.
-
-## Overview — what problem does this solve?
-
-**Long-term memory without the token tax.** If you dump all your memory into the prompt, a large memory costs a fortune in tokens every session. DSWM loads only the **index** (small, auto-injected every session); the actual topic files are read **on demand** when a task needs them.
-
-**Lightweight, no heavy machinery.** LLM-Wiki-style systems are powerful but heavy and hard to maintain — overkill for most users. DSWM's entire memory is plain Markdown files: edit them by hand, or let the agent edit them. What you see is what you get.
-
-**Shared across harnesses.** Long-term memory should belong to you, not to one harness. DSWM's memory is plain `.md` files that any harness can consume — to reuse the same memory in another tool, just point that tool's `AGENTS.md` (or equivalent) at it.
-
-## What it does
-
-Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**) before the first request. DSWM maintains that file plus a small wiki vault:
-
-```
-~/.dsh/
-├── AGENTS.md              # index + seven-rule maintenance convention (auto-injected)
-└── workspace/             # the vault (a git repo)
-    ├── reference/         # confirmed memory topics (indexed, searchable)
-    │   └── skills/        # per-tool memory: facts about one skill / MCP server (not indexed, looked up by name)
-    ├── pending/           # unconfirmed drafts (NOT indexed; waiting for you to confirm)
-    ├── archive/           # outdated topics (kept, not searched)
-    └── memory-log.md      # append-only operation log (audit + freshness)
-```
-
-`reference/` holds one Markdown file per topic, named by topic — like this:
-
-![reference directory example](assets/reference-dir-example.png)
-
-Each file is the full detail of one topic (e.g. `DOCKER-NAS.md`, `INFRA-SERVERS.md`, `HOME-ASSISTANT-CONTROL.md`), pointed to by an index entry in `AGENTS.md`; the file is read only when the task needs it — otherwise only the small index occupies context.
-
-### The seven rules (all in AGENTS.md, injected into every session)
-
-1. **Write trigger (realtime)** — capture memorable info **as it appears** during the session; write immediately (don't wait for session end, don't silently drop it). Writing is realtime (straight into `pending/`), confirming is deferred (reported at the start of your next session) — so `/new` or closing the page never loses anything.
-2. **Admission** — unconfirmed → `pending/`; say **"save"** / **"confirm"** / **"promote"** to promote to `reference/` + update index + log. TTL: 7d (interactive) / 30d (unattended).
-3. **Unattended sessions** (task-board timers, background subagents) — write `pending/` only, never promote themselves.
-4. **Periodic cleanup** — say **"organize memory"** → agent proposes reorganization (split/merge/rename/archive), you approve, outdated content goes to `archive/`.
-5. **Backup** — `workspace/` is a git repo; auto-commit after memory changes.
-6. **Retrieval** — before using any skill / MCP, check `reference/skills/` for the matching file; then the index; then scan `reference/` (including `skills/`) as a fallback — never assume "no memory".
-7. **Report on mismatch** — when a remembered fact is wrong: mark `❓unverified (date)` (**never silently rewrite**) → write a pending note with "recorded / actual / evidence" → tell the user immediately → update after confirmation.
-
-#### What per-tool memory is
-
-Some facts are only needed **while using one tool**. Putting them in `SKILL.md` loses them when the skill updates; putting them in the memory index injects them into every session and wastes tokens. `reference/skills/` is the third place:
-
-| Where | What | When read |
-|---|---|---|
-| `SKILL.md` (shipped by the tool) | how to use it, workflow | when the skill loads |
-| `reference/skills/<tool>.md` | **stable external facts** (IDs, enums, endpoints, required params) and gotchas | right before using that tool |
-| `reference/<topic>.md` | cross-tool preferences and facts (taste, address, how you're addressed) | when an index entry matches |
-
-Example: a food-delivery MCP's store `storeCode`, combo `code`s and pickup enums → `skills/mcp-<server>.md`; "I don't eat cilantro" → `reference/`.
-
-## Compatibility
-
-- Verified against DSH **0.2.1-rc.2** (source-level review of `dsh-v0.2.1-rc.2` plus the official compatibility evaluator); also compatible with every 0.1.x / 0.2.x line from 0.1.0-rc.7 onward.
-- Compatibility declaration: `engines.dsh` = `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`. DSH 0.2+ uses it to block installation/activation of incompatible versions; 0.3.x is not declared yet (upgrade DSWM when it lands, or exempt temporarily with `dsh plugin allow-version`).
-- Last verified: 2026-10-19.
-- Requires the native `dsh-agent-instructions` mechanism (enabled by default in the `dsh-base` bundle); if your deployment disables it, memory injection will not work.
-
-### Known conflict with anchored modes (liangshen / Anchored Standard)
-
-**liangshen mode** and **Anchored Standard mode** clear the runtime context on the first turn and keep only your direct message, which **suppresses the automatic `~/.dsh/AGENTS.md` injection** performed by `dsh-agent-instructions`. DSWM's memory index and seven-rule convention rely on that injection, so in these modes memory is not auto-loaded at the start of a session.
-
-This is not a bug — it is the **deliberate design** of anchored modes (anchoring the reasoning trajectory to a minimal context). The fix is simple:
-
-- When you need to read/maintain memory, **ask the agent to read `AGENTS.md` manually**, e.g.:
-  - `Read ~/.dsh/AGENTS.md first, then continue`
-  - or simply `Follow the memory rules in AGENTS.md`
-- In liangshen mode, after the first-block anchoring promotes (entering "we can" mode), you can also ask the agent to read `AGENTS.md` manually, and the memory rules then work normally with DSWM.
-- Other (non-anchored) sessions are unaffected — memory is auto-injected as usual.
-
-## Install
-
-**Option 1: npm (recommended — auto-updates)**
+## Quick start
 
 ```bash
 dsh plugin --profile web add dsh-simple-wiki-memory
 ```
 
-> Published to npm. The dsh-market plugin market shows the version and detects updates automatically (new releases prompt after a one-day safety window); you can also pull the latest manually with the same command at any time.
+That's it. On first startup the plugin syncs `~/.dsh/AGENTS.md`, creates `~/.dsh/workspace/` and runs `git init` — idempotent, **merge-only, never overwriting** your existing index entries.
 
-**Option 2: GitHub (source install)**
+Three phrases you'll actually use:
+
+| You say | It does |
+|---|---|
+| "remember …" (any time) | writes to `pending/`, reported at the start of your next session |
+| **"save" / "confirm"** | promotes pending drafts into real memory + updates the index |
+| **"organize memory"** | proposes a reorganisation (split / merge / archive); you approve, then it executes |
+
+Tool details work the same way: say "remember the combo code I always order" and it lands in `reference/skills/` — not in the index.
+
+## How it works
+
+Before the first request of every session, DSH auto-injects `~/.dsh/AGENTS.md` (index + rules). DSWM maintains that file plus a small wiki vault:
+
+```
+~/.dsh/
+├── AGENTS.md              # ① index + seven rules (injected into every session)
+└── workspace/             # the vault (a git repo)
+    ├── reference/         # ② topic memory (indexed, searchable)
+    │   └── skills/        # ③ per-tool memory (not indexed; looked up by tool name)
+    ├── pending/           # unconfirmed drafts (not searched)
+    ├── archive/           # outdated content (kept, not searched)
+    └── memory-log.md      # append-only operation log (audit + freshness)
+```
+
+**Who holds what:**
+
+| Where | What | When read | In index |
+|---|---|---|---|
+| `AGENTS.md` index | one-line topic + full path | every session | — |
+| `reference/<topic>.md` | cross-tool preferences and facts (taste, address, how you're addressed) | when an index entry matches | ✅ |
+| `reference/skills/<tool>.md` | stable facts about one skill / MCP server (IDs, enums, endpoints, required params) and gotchas | right before using that tool, by name | ❌ |
+
+Example: a food-delivery MCP's store `storeCode`, combo `code`s and pickup enums → `skills/mcp-mcd.md`; "I don't eat cilantro" → `reference/`.
+
+## The seven rules at a glance
+
+The full text lives in `AGENTS.md` (injected into every session); this is just the cheat sheet:
+
+| # | Rule | In one line |
+|---|---|---|
+| 1 | Write trigger | Capture as it appears → straight into `pending/`; never wait for session end |
+| 2 | Admission | Classify first → `pending/` → promote only when you say "save"; per-tool memory has four extra gates |
+| 3 | Unattended | Scheduled tasks / background subagents write `pending/` only and never touch AGENTS.md |
+| 4 | Cleanup | "organize memory" → split / merge / archive, executed only after your approval; includes budget audit and SKILL.md de-duplication |
+| 5 | Backup | `workspace/` is a git repo; auto-commit after memory changes |
+| 6 | Retrieval | Before using a tool: check `skills/` → then the index → then scan the directory as a fallback |
+| 7 | Report on mismatch | When memory is wrong: mark `❓unverified`, **never silently rewrite**, report to you, update after confirmation |
+
+Backed by the **lean-recording rules** (v0.3.0): the delete test ("would removing this line cause a mistake?"), three things never to store (schema-declared / re-derivable by a query / time-varying), budgets (per-tool 6KB / 80 lines, reference 12KB, index entries 80 chars), over budget requires your approval — plus the **secrets red line**: never store credentials or unrelated personal-security details.
+
+## Compatibility
+
+- Verified against DSH **0.2.1-rc.2** (source review + the official compatibility evaluator); compatible with every 0.1.x / 0.2.x release line from 0.1.0-rc.7.
+- `engines.dsh` = `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`. DSH 0.2+ uses it to block installation / activation of versions outside the range; 0.3.x is not declared yet (upgrade DSWM then, or exempt temporarily with `dsh plugin allow-version`).
+- Depends on DSH's native `dsh-agent-instructions` (enabled by default in the `dsh-base` bundle); if your deployment disables it, memory will not be injected.
+
+## Install
+
+**npm (recommended — the market shows versions and detects updates)**
 
 ```bash
-dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory
+dsh plugin --profile web add dsh-simple-wiki-memory
 ```
 
-**Option 3: let an agent install it**
+**From source**: `dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory`
 
-Just paste the link below into a DSH session and ask the agent to install it for you:
+**Let the agent do it**: paste https://github.com/rainow/dsh-simple-wiki-memory into a session.
 
-```
-https://github.com/rainow/dsh-simple-wiki-memory
-```
-
-> The agent will run `dsh plugin --profile web add dsh-simple-wiki-memory` and complete the first-time sync.
-
-First startup syncs the skeleton, scaffolds the vault, and git-inits `workspace/` — idempotent, merge-only, never clobbers your existing `~/.dsh/AGENTS.md` index entries.
+> Pin a version explicitly when you need one: `dsh plugin --profile web add dsh-simple-wiki-memory@0.3.0`. Without a version spec, an existing exact pin is **not** upgraded automatically.
 
 ## Uninstall
 
@@ -125,46 +95,47 @@ First startup syncs the skeleton, scaffolds the vault, and git-inits `workspace/
 dsh plugin --profile web remove dsh-simple-wiki-memory
 ```
 
-Removing the plugin stops the runtime hooks (auto-commit, pending report) but **keeps your data**: `~/.dsh/AGENTS.md` and `~/.dsh/workspace/` are not deleted. The seven-rule convention stays in AGENTS.md (it is plain text the agent follows); delete that section manually if you want it gone.
-
-## Quick start
-
-1. Install (above); the vault is scaffolded automatically on first startup.
-2. In any session, ask the agent to remember something — it writes to `pending/`.
-3. Say **"save"** / **"confirm"** / **"promote"** to promote pending drafts into confirmed memory.
-4. Say **"organize memory"** to trigger the reorganization workflow (you approve before it executes).
-5. The bundled **`memory-query`** skill handles retrieval with the directory-scan fallback.
-
-At the start of your next session, the agent automatically reminds you of unconfirmed memory (writing is realtime, so `/new` or closing the page never loses anything):
-
-![pending report example](assets/pending-report-example.png)
-
-## Configuration
-
-v0.1 has no user-facing configuration; defaults are safe. Planned (v0.2): settings section for TTL days, auto-commit on/off, memory directory path.
+Removing the plugin stops the runtime hooks (auto-commit, pending report) but **keeps your data**: `AGENTS.md` and `workspace/` are not deleted. The seven rules stay in AGENTS.md (plain text your agent follows); delete that section manually if you want it gone.
 
 ## Permissions & data
 
-- **Files**: reads/writes `~/.dsh/AGENTS.md` and `~/.dsh/workspace/` (creates `reference/`, `reference/skills/`, `pending/`, `archive/`, `memory-log.md`; merges the rules section into AGENTS.md — never overwrites your index entries).
-- **Commands**: runs `git init / add / commit` inside `~/.dsh/workspace/` (auto-backup).
-- **No network, no credentials, no telemetry.**
-- Reading memory works in **any** sandbox mode (reads are never sandboxed in DSH). Writing to `~/.dsh/workspace/` requires `danger-full-access`, or `workspace-write` with per-call approval escalation.
+- **Files**: reads/writes `~/.dsh/AGENTS.md` and `~/.dsh/workspace/` (creates `reference/`, `reference/skills/`, `pending/`, `archive/`, `memory-log.md`)
+- **Commands**: runs `git init / add / commit` inside `workspace/`
+- **No network, no credentials, no telemetry**
+- Reading memory works in **any** sandbox mode; writing to `workspace/` requires `danger-full-access`, or `workspace-write` with per-call approval escalation
 
 ## Troubleshooting
 
-- **Auto-commit does nothing**: check `~/.dsh/workspace/.git` exists; if git is unavailable, the plugin degrades gracefully (memory still works, just without backup).
-- **Memory not injected**: confirm `dsh-agent-instructions` is enabled in your profile/preset (it is the mechanism that auto-loads AGENTS.md).
-- **Rollback**: the vault is a git repo — `git -C ~/.dsh/workspace log` / `git -C ~/.dsh/workspace reset --hard <commit>`.
+- **Auto-commit not happening**: check `~/.dsh/workspace/.git`. Without git the plugin degrades gracefully — memory still works, just without backup
+- **Memory not injected**: make sure `dsh-agent-instructions` is enabled
+- **Rules look outdated**: `AGENTS.md` should carry `<!-- dswm:rules v=2 -->` near the top. When missing, the plugin asks your agent to merge the new rules in the next session (it backs up `AGENTS.md.bak-<date>` first)
+- **Rollback**: the vault is a git repo — `git -C ~/.dsh/workspace log` / `git -C ~/.dsh/workspace reset --hard <commit>`
 
 ## Development
 
 ```bash
-node --check lib/index.js   # syntax check
+node --check lib/index.js
 ```
 
-Package layout: `lib/index.js` (sync + hooks), `assets/` (AGENTS.md / memory-log templates), `skills/memory-query/`. The plugin uses the DSH bundle distribution model (`dsh.bundle.patch` → `cordis.patch.yml`).
+Package layout: `lib/index.js` (sync + hooks), `assets/` (AGENTS.md / memory-log / skills-about templates), `skills/memory-query/`. Distribution uses the DSH bundle model (`dsh.bundle.patch` → `cordis.patch.yml`).
 
-## Full changelog
+## Known issue: anchored modes
+
+<details>
+<summary>liangshen / Anchored Standard — memory is not auto-loaded</summary>
+
+Both modes clear the runtime context on the first turn and keep only your direct message, which **suppresses the automatic `~/.dsh/AGENTS.md` injection** performed by `dsh-agent-instructions`. DSWM's index and rules rely on that injection, so memory is not loaded at the start of a session.
+
+This is not a bug — it is the deliberate design of anchored modes (anchor the reasoning trace with minimal context). Just ask the agent to read the file when you need memory:
+
+- `read ~/.dsh/AGENTS.md first, then start`
+- or `follow the memory rules in AGENTS.md`
+- liangshen can also read it manually after the first block is anchored ("we can" mode); from then on DSWM behaves normally
+- Other sessions (non-anchored) are unaffected
+
+</details>
+
+## Changelog
 
 ### v0.3.0 (2026-10-28) — per-tool memory + lean recording
 
@@ -205,7 +176,7 @@ Package layout: `lib/index.js` (sync + hooks), `assets/` (AGENTS.md / memory-log
 
 ### v0.1.0 (2026-08-18) — initial release
 
-- Six-rule memory system: auto-injected index + one markdown file per topic read on demand; pending → reference → archive zones + memory-log audit + git auto-backup;
+- Memory rule system: auto-injected index + one markdown file per topic read on demand; pending → reference → archive zones + memory-log audit + git auto-backup;
 - Runtime hooks: auto-commit after each turn, pending report at session start;
 - AGENTS.md is merge-only (never overwrites); uninstall keeps all your data.
 

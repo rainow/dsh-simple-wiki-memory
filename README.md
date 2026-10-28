@@ -1,123 +1,93 @@
 # DSWM — DeepSeek Harness 简易 Wiki 记忆插件
 
-超级简化版 llm-wiki 记忆插件：一个索引文档（自动加载）+ 每个 topic 一个单独 md 文件（需要时才 read），避免啥都往上下文里面塞浪费 token。简单轻量，安装卸载都没有压力，想怎么改就怎么改。
+超级简化版 llm-wiki 记忆插件，三层各司其职：
 
-基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）原生 `dsh-agent-instructions`（AGENTS.md）机制的自维护持久记忆系统。无 RAG、无向量库、无运行时 LLM 调用——纯 Markdown + git。
+**① 索引** 一份文档，每个会话自动加载 · **② 主题** 每个 topic 一个 md，任务相关时才 read · **③ 技能** 每个 skill 一个 md（与 skill 同名），调用该 skill 时自动读
 
-> English: [README.en.md](README.en.md).
+所以**索引既不随记忆变多、也不随工具变多而膨胀**。纯 Markdown + git，安装卸载都没有压力，想怎么改就怎么改。
 
-## 最近更新
+基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）原生 `dsh-agent-instructions`（AGENTS.md）机制的自维护持久记忆系统。无 RAG、无向量库、无运行时 LLM 调用。
 
-### v0.3.0（2026-10-28）— 技能记忆 + 记录规范
+> 当前版本 **v0.3.0**（2026-10-28）· [更新记录](#更新记录) · English: [README.en.md](README.en.md)
 
-- **新增技能记忆**：skill / MCP 使用中的稳定事实（ID、枚举、端点、必填参数）与坑点，存到 `reference/skills/<skill-id>.md`（MCP 用 `mcp-<server>.md`）。**不进索引**——用工具前按名字直接查，索引不随工具数量膨胀；
-- **新增「写入前定归属」判据**：有工具专有标识符 → `skills/`；换个工具仍成立（口味/住址/称呼）→ `reference/`；两类都有 → 主体放 skills 并加指针；拿不准就问用户；
-- **新增「出错即回报」**：用工具时发现记忆与实际不符 → 先标 `❓待核实` 不改数 → 写 pending 说明证据 → 当场告知用户 → 确认后再改；
-- **新增记录规范（省 token）**：删除测试（"删掉它下次会出错吗"）、三类禁写（schema 已声明的 / 能现场查到的 / 会变的）、预算（技能记忆 6KB/80 行、reference 12KB、索引单条 80 字）、超预算须向用户申请；实测同类文档可压 60~70%；
-- **新增安全红线**：记忆文件永不写入凭据（密码 / token / 密钥 / 私钥 / 证件）与与用途无关的个人安全细节；
-- **新增规则版本与升级提示**：规则区带 `<!-- dswm:rules v=2 -->` 标记。老用户（v1 = 六分支、无标记）升级后，插件在**首个会话注入一条中英双语提示**，让 agent 读新模板、**强制备份** `AGENTS.md.bak-<日期>`、只合并变化部分并写回标记——**插件自身绝不改写你已有的规则区**；未升级则下次会话继续提醒；
-- 初始化时创建 `reference/skills/` 并写入 `_about.md`（归属判据 + 文件模板）；
-- 兼容性不变：`engines.dsh` 仍覆盖 0.1.x / 0.2.x 全发布线。
-
-> 完整历史见文末 [完整更新记录](#完整更新记录)。
-
-## 简介 — 解决什么问题？
-
-**长期记忆多但不费 token。** 如果把所有记忆一股脑塞进提示词，记忆越多每个会话烧的 token 越贵。DSWM 默认只加载**索引**（小、每个会话自动注入），主题文件在任务需要时**按需读取**。
-
-**轻量，不上重型机制。** LLM-Wiki 那套系统功能强但重、维护困难，对大多数用户没必要。DSWM 的所有记忆就是简单的 `.md` 文件——手动改、或让 agent 改都行，所见即所得。
-
-**记忆跨 harness 共享。** 长期记忆应该属于你，而不是属于某一个 harness。DSWM 的纯 md 记忆文件随时可以共享给其他 harness 使用——只需要把对应 harness 的 `AGENTS.md`（或等效文件）指向它即可。
-
-## 功能
-
-DSH 在**每个会话第一个请求前**自动注入 `~/.dsh/AGENTS.md`（记忆**索引 + 规则**）。DSWM 维护该文件和一个小型 wiki 库：
-
-```
-~/.dsh/
-├── AGENTS.md              # 索引 + 七条维护规则（自动注入每个会话）
-└── workspace/             # 记忆库（git 仓库）
-    ├── reference/         # 已确认记忆主题（进索引、参与检索）
-    │   └── skills/        # 技能记忆：某个 skill / MCP 的稳定事实（不进索引，按名查）
-    ├── pending/           # 待确认草稿（不参与检索，等你说"存档"）
-    ├── archive/           # 过时主题（保留、不参与检索）
-    └── memory-log.md      # 追加式操作日志（审计 + 新鲜度）
-```
-
-`reference/` 里就是按主题命名的 md 文件，一个主题一个文件，像这样：
-
-![reference 目录示例](assets/reference-dir-example.png)
-
-每个文件是一个主题的完整细节（如 `DOCKER-NAS.md`、`INFRA-SERVERS.md`、`HOME-ASSISTANT-CONTROL.md`），由 `AGENTS.md` 索引条目指向；任务需要时才 read 对应文件，平时只加载索引，不占上下文。
-
-### 七条规则（全在 AGENTS.md，注入每个会话）
-
-1. **写入触发（实时捕捉）** — 会话过程中产生值得记住的信息**立即**写入（不等待会话结束、不默默丢弃）。写入是实时的（直接进 `pending/`），确认是延迟的（下次会话开始时汇报）——`/new` 或关闭页面都不会丢失。
-2. **准入流程** — 未确认 → `pending/`；说"存档/确认" → 晋升到 `reference/` + 更新索引 + 记日志。TTL：交互 7 天 / 无人值守 30 天。
-3. **无人值守会话**（task-board 定时、后台 subagent）— 只写 `pending/`，不自动晋升。
-4. **定期整理** — 说"整理记忆" → agent 输出重组方案（拆分/合并/改名/归档），你确认后执行，过时内容进 `archive/`。
-5. **备份** — `workspace/` 是 git 仓库；记忆变更后自动 commit。
-6. **检索** — 用任何 skill / MCP **之前**先看 `reference/skills/` 有没有同名文件；再查索引；无匹配则扫 `reference/`（含 `skills/`）兜底，绝不直接认定"没有记忆"。
-7. **出错即回报** — 发现记忆与实际不符：先标 `❓待核实（日期）`（**绝不静默改数**）→ 写 pending 说明「原记录 / 实际 / 证据」→ 当场告诉用户 → 确认后更新。
-
-#### 技能记忆是什么
-
-有些信息**只有在用某个工具时才需要**，写进 SKILL.md 会被 skill 更新覆盖，写进记忆索引又会每次会话都注入、浪费 token。`reference/skills/` 是第三处：
-
-| 放哪 | 内容 | 何时读 |
-|---|---|---|
-| `SKILL.md`（工具自带） | 使用方法、流程 | 加载 skill 时 |
-| `reference/skills/<工具>.md` | 该工具的**稳定外部事实**（ID、枚举、端点、必填参数）与坑点 | 用该工具前按名字查 |
-| `reference/<主题>.md` | 跨工具的偏好与事实（口味、住址、称呼） | 索引命中时 |
-
-例：麦当劳 MCP 的门店 `storeCode`、套餐 `code`、取餐方式枚举 → `skills/mcp-mcd.md`；"我不吃香菜" → `reference/`。
-
-## 兼容性
-
-- 已用 DSH **0.2.1-rc.2**（`dsh-v0.2.1-rc.2` 源码对照 + 官方兼容性判定函数实测）验证；另兼容 0.1.0-rc.7 起的全部 0.1.x / 0.2.x 发布线。
-- 兼容声明：`engines.dsh` = `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`。DSH 0.2+ 会据此阻止不满足要求的版本安装/激活；0.3.x 未声明（届时需升级 DSWM，或临时用 `dsh plugin allow-version` 豁免）。
-- 最后验证日期：2026-10-19。
-- 依赖 DSH 原生 `dsh-agent-instructions` 机制（`dsh-base` bundle 默认启用）；若你的部署禁用了它，记忆注入将不生效。
-
-### 与锚定模式的已知冲突（liangshen / Anchored Standard）
-
-**liangshen 模式**（梁神模式）和 **Anchored Standard 模式**会在会话首轮清空运行时上下文、只保留你的直接消息，从而**屏蔽 `dsh-agent-instructions` 对 `~/.dsh/AGENTS.md` 的自动注入**。DSWM 的记忆索引与七条规则正是靠这个注入生效的，因此在上述模式下，会话开头不会自动加载记忆。
-
-这不是 bug，而是锚定模式的**刻意设计**（用最小上下文锚定推理轨迹）。解决方式很简单：
-
-- 需要读取/维护记忆时，**手动让 agent 读 `AGENTS.md`** 即可，例如说：
-  - `先读一下 ~/.dsh/AGENTS.md 再开始`
-  - 或直接说 `按 AGENTS.md 里的记忆规则处理`
-- liangshen 模式在首块锚定晋升（进入"we can"模式）后，也**可以**手动让 agent 读 `AGENTS.md`，之后记忆规则即按 DSWM 正常运作。
-- 其余会话（非锚定模式）不受影响，记忆照常自动注入。
-
-## 安装
-
-**方式一：npm（推荐，支持自动更新）**
+## 30 秒上手
 
 ```bash
 dsh plugin --profile web add dsh-simple-wiki-memory
 ```
 
-> 本包已发布到 npm。dsh-market 插件市场会显示版本号并自动检测更新（新版本发布满一天后提示更新）；也可以随时手动 `dsh plugin --profile web add dsh-simple-wiki-memory` 拉最新版。
+装完即用。首次启动自动同步 `~/.dsh/AGENTS.md`、创建 `~/.dsh/workspace/` 并 git init——**幂等、只合并、绝不覆盖**你已有的索引条目。
 
-**方式二：GitHub（源码安装）**
+三句最常用的话：
+
+| 你说 | 它做 |
+|---|---|
+| （任何时候）记住… | 写进 `pending/`，下次会话开头提醒你 |
+| **"存档 / 确认"** | 把待确认草稿晋升为正式记忆 + 更新索引 |
+| **"整理记忆"** | 输出重组方案（拆分 / 合并 / 归档），你确认后执行 |
+
+工具细节也照此办理：说"记住我常点的套餐 code"，它会落到 `reference/skills/`，而不是塞进索引。
+
+## 它是怎么工作的
+
+每个会话第一个请求前，DSH 自动注入 `~/.dsh/AGENTS.md`（索引 + 规则）。DSWM 维护它和一个小型 wiki 库：
+
+```
+~/.dsh/
+├── AGENTS.md              # ① 索引 + 七条规则（每会话自动注入）
+└── workspace/             # 记忆库（git 仓库）
+    ├── reference/         # ② 主题记忆（进索引、参与检索）
+    │   └── skills/        # ③ 技能记忆（不进索引，按工具名直接查）
+    ├── pending/           # 待确认草稿（不参与检索）
+    ├── archive/           # 过时内容（保留、不参与检索）
+    └── memory-log.md      # 追加式操作日志（审计 + 新鲜度）
+```
+
+**三处分工**：
+
+| 放哪 | 存什么 | 何时读 | 进索引 |
+|---|---|---|---|
+| `AGENTS.md` 索引 | 一句话主题 + 完整路径 | 每个会话 | — |
+| `reference/<主题>.md` | 跨工具的偏好与事实（口味、住址、称呼） | 索引命中时 | ✅ |
+| `reference/skills/<工具>.md` | 某 skill / MCP 的稳定事实（ID、枚举、端点、必填参数）与坑点 | 用该工具前按名字查 | ❌ |
+
+例：麦当劳 MCP 的门店 `storeCode`、套餐 `code`、取餐方式枚举 → `skills/mcp-mcd.md`；"我不吃香菜" → `reference/`。
+
+## 七条规则一览
+
+规则全文在 `AGENTS.md` 里（每个会话都注入给 agent），这里只做速览：
+
+| # | 规则 | 一句话 |
+|---|---|---|
+| 1 | 写入触发 | 产生即写 `pending/`，不等会话结束、不默默丢弃 |
+| 2 | 准入流程 | 先定归属 → 落 pending → 你说"存档"才晋升；技能记忆另有四道闸 |
+| 3 | 无人值守 | 定时任务 / 后台 subagent 只写 pending，也不得改 AGENTS.md |
+| 4 | 定期整理 | "整理记忆" → 拆分 / 合并 / 归档，你确认后执行；含预算巡检与 SKILL.md 去重 |
+| 5 | 备份 | `workspace/` 是 git 仓库，记忆变更后自动 commit |
+| 6 | 检索 | 用工具前先查 `skills/` → 再查索引 → 最后扫目录兜底 |
+| 7 | 出错即回报 | 记忆与实际不符：先标 `❓待核实` **绝不静默改数**，报你确认后再改 |
+
+配套的**记录规范**（v0.3.0）：删除测试（"删掉它下次会出错吗"）、三类禁写（schema 已声明 / 能现场查到 / 会变的）、预算（技能记忆 6KB/80 行、reference 12KB、索引条目 80 字）、超预算需你批准；**安全红线**：永不写入凭据与无关的个人安全细节。
+
+## 兼容性
+
+- 已用 DSH **0.2.1-rc.2** 实测（源码对照 + 官方兼容性判定函数），兼容 0.1.0-rc.7 起全部 0.1.x / 0.2.x 发布线。
+- `engines.dsh` = `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`。DSH 0.2+ 会据此阻止不满足要求的版本安装 / 激活；0.3.x 未声明（届时需升级 DSWM，或 `dsh plugin allow-version` 临时豁免）。
+- 依赖 DSH 原生 `dsh-agent-instructions`（`dsh-base` bundle 默认启用）；部署若禁用它，记忆不会注入。
+
+## 安装
+
+**npm（推荐，支持市场自动更新）**
 
 ```bash
-dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory
+dsh plugin --profile web add dsh-simple-wiki-memory
 ```
 
-**方式三：交给 agent 安装**
+**源码安装**：`dsh plugin --profile web add github:rainow/dsh-simple-wiki-memory`
 
-直接把下面的链接丢给 DSH 会话里的 agent，让它帮你安装即可：
+**交给 agent**：把 https://github.com/rainow/dsh-simple-wiki-memory 丢进会话，让它装。
 
-```
-https://github.com/rainow/dsh-simple-wiki-memory
-```
-
-> agent 会执行 `dsh plugin --profile web add dsh-simple-wiki-memory`，并完成首次同步。
-
-首次启动自动：同步 AGENTS.md 骨架、创建 vault 目录、git init `workspace/`。**幂等、只合并、绝不覆盖**你已有的 `~/.dsh/AGENTS.md` 索引条目。
+> 指定版本要写全：`dsh plugin --profile web add dsh-simple-wiki-memory@0.3.0`。不写版本号时，已有的精确版本**不会**自动升级。
 
 ## 卸载
 
@@ -125,46 +95,47 @@ https://github.com/rainow/dsh-simple-wiki-memory
 dsh plugin --profile web remove dsh-simple-wiki-memory
 ```
 
-移除插件会停止运行时钩子（自动 commit、pending 汇报），但**保留你的数据**：`~/.dsh/AGENTS.md` 和 `~/.dsh/workspace/` 不会被删除。七条规则仍留在 AGENTS.md（它是 agent 遵循的纯文本）；想彻底移除就手动删掉那段。
-
-## 快速上手
-
-1. 安装（见上）；首次启动自动创建 vault。
-2. 任何会话里让 agent 记住某事——它会写入 `pending/`。
-3. 说 **"存档/确认"** → 把 pending 草稿晋升为正式记忆。
-4. 说 **"整理记忆"** → 触发重组流程（执行前需你确认）。
-5. 自带 **`memory-query`** 技能处理检索（含目录扫描兜底）。
-
-下次新会话开始时，agent 会自动提醒你待确认的记忆（写入是实时的，所以 `/new` 或关页面都不丢）：
-
-![pending 汇报示例](assets/pending-report-example.png)
-
-## 配置
-
-v0.1 无用户可见配置项，默认值安全。计划（v0.2）：settings 段提供 TTL 天数、自动 commit 开关、记忆目录路径。
+停掉运行时钩子（自动 commit、pending 汇报），但**保留你的数据**：`AGENTS.md` 和 `workspace/` 都不会被删。七条规则仍留在 AGENTS.md（它只是 agent 遵循的纯文本）；想彻底移除就手动删掉那一段。
 
 ## 权限与数据
 
-- **文件**：读写 `~/.dsh/AGENTS.md` 和 `~/.dsh/workspace/`（创建 `reference/`、`reference/skills/`、`pending/`、`archive/`、`memory-log.md`；把规则段合并进 AGENTS.md——绝不覆盖你的索引条目）。
-- **命令**：在 `~/.dsh/workspace/` 内执行 `git init / add / commit`（自动备份）。
-- **无网络、无凭据、无遥测。**
-- 读取记忆在**任何**沙箱模式下都可行（DSH 的 read 从不被沙箱限制）。写入 `~/.dsh/workspace/` 需要 `danger-full-access`，或 `workspace-write` + 按需批准升级。
+- **文件**：读写 `~/.dsh/AGENTS.md` 与 `~/.dsh/workspace/`（创建 `reference/`、`reference/skills/`、`pending/`、`archive/`、`memory-log.md`）
+- **命令**：在 `workspace/` 内执行 `git init / add / commit`
+- **无网络、无凭据、无遥测**
+- 读取记忆在任何沙箱模式下都可行；写入 `workspace/` 需要 `danger-full-access`，或 `workspace-write` + 按次批准升级
 
 ## 故障排查
 
-- **自动 commit 不生效**：检查 `~/.dsh/workspace/.git` 是否存在；若 git 不可用，插件会优雅降级（记忆仍工作，只是没有备份）。
-- **记忆未注入**：确认你的 profile/preset 启用了 `dsh-agent-instructions`（它负责自动加载 AGENTS.md）。
-- **回滚**：vault 是 git 仓库——`git -C ~/.dsh/workspace log` / `git -C ~/.dsh/workspace reset --hard <commit>`。
+- **自动 commit 不生效**：检查 `~/.dsh/workspace/.git`。git 不可用时插件优雅降级——记忆照常工作，只是没有备份
+- **记忆没被注入**：确认启用了 `dsh-agent-instructions`
+- **规则像是旧版**：`AGENTS.md` 顶部应有 `<!-- dswm:rules v=2 -->`。缺失时插件会在下个会话提示 agent 合并（会先强制备份 `AGENTS.md.bak-<日期>`）
+- **回滚**：vault 是 git 仓库 —— `git -C ~/.dsh/workspace log` / `git -C ~/.dsh/workspace reset --hard <commit>`
 
 ## 开发
 
 ```bash
-node --check lib/index.js   # 语法检查
+node --check lib/index.js
 ```
 
-包结构：`lib/index.js`（同步 + 钩子）、`assets/`（AGENTS.md / memory-log 模板）、`skills/memory-query/`。采用 DSH bundle 分发模型（`dsh.bundle.patch` → `cordis.patch.yml`）。
+包结构：`lib/index.js`（同步 + 钩子）、`assets/`（AGENTS.md / memory-log / skills-about 模板）、`skills/memory-query/`。采用 DSH bundle 分发模型（`dsh.bundle.patch` → `cordis.patch.yml`）。
 
-## 完整更新记录
+## 已知问题：锚定模式
+
+<details>
+<summary>liangshen（梁神模式）/ Anchored Standard 下记忆不会自动加载</summary>
+
+这两种模式会在会话首轮清空运行时上下文、只保留你的直接消息，从而**屏蔽 `dsh-agent-instructions` 对 `~/.dsh/AGENTS.md` 的注入**。DSWM 的索引与规则正是靠这个注入生效的，所以与会话开头不会自动加载记忆。
+
+这不是 bug，而是锚定模式的刻意设计（用最小上下文锚定推理轨迹）。需要读写记忆时手动让 agent 读即可：
+
+- `先读一下 ~/.dsh/AGENTS.md 再开始`
+- 或 `按 AGENTS.md 里的记忆规则处理`
+- liangshen 模式在首块锚定晋升（进入"we can"模式）后也可以手动读，之后记忆规则即按 DSWM 正常运作
+- 其余会话（非锚定模式）不受影响
+
+</details>
+
+## 更新记录
 
 ### v0.3.0（2026-10-28）— 技能记忆 + 记录规范
 
@@ -205,7 +176,7 @@ node --check lib/index.js   # 语法检查
 
 ### v0.1.0（2026-08-18）— 初始版本
 
-- 六分支记忆规则系统：索引自动注入 + 每主题一个 md 按需读取；pending → reference → archive 三区 + memory-log 审计 + git 自动备份；
+- 记忆规则系统：索引自动注入 + 每主题一个 md 按需读取；pending → reference → archive 三区 + memory-log 审计 + git 自动备份；
 - 运行时钩子：回合结束自动 commit、会话开始 pending 汇报；
 - AGENTS.md 只合并不覆盖，卸载保留全部数据。
 
