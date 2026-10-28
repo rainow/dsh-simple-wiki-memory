@@ -8,16 +8,18 @@ A self-maintaining persistent memory system for [DeepSeek Harness](https://githu
 
 ## Latest update
 
-### v0.2.0 (2026-10-19) — DSH 0.2.x compatibility
+### v0.3.0 (2026-10-28) — per-tool memory + lean recording
 
-- **Compatible with DSH 0.2.1-rc.2 / 0.2.1-alpha.x / 0.2.0-rc.x, plus 0.1.6 / 0.1.7**: added an `engines.dsh` declaration `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0` and extended peerDependencies to nine release lines;
-- **Important: DSH 0.2+ now enforces plugin version requirements** — when `engines.dsh` (preferred) or peerDependencies are unmet, the plugin is **blocked from installation and activation**. Older DSWM (≤0.1.3) is rejected on 0.2.x, so upgrading to this release is required;
-- **Fixed a DSH 0.2 breaking change**: DSH 0.2 removed the shared `plugin` message source kind ("there is no shared catch-all `plugin` kind") in favour of per-producer `MessageSourceMap` augmentation. DSWM now declares and uses its own `dswm` kind (`lib/types/index.d.ts` carries the type extension; runtime consumers fall through unknown kinds);
-- Verified item by item against the `dsh-v0.2.1-rc.2` source: `session/event` + `turn/end`, `agent/pre-step` (agent injection and `{kind:'enter', messages}` decision shape unchanged), `createUserMessage`, cordis 4.0.5 `prepend`, patch `insert`, `dsh.bundle.patch` — all compatible;
-- Checked with the **real compatibility evaluator from DSH 0.2.1-rc.2**: 0.1.0-rc.8 through 0.2.1-rc.2 all pass (0.3.x is not declared yet — it will prompt for an upgrade, or can be exempted temporarily with `dsh plugin allow-version`);
-- Install/upgrade: `dsh plugin --profile web add dsh-simple-wiki-memory`.
+- **Per-tool memory**: stable facts about a skill or MCP server (IDs, enums, endpoints, required params) and its gotchas now live in `reference/skills/<skill-id>.md` (`mcp-<server>.md` for MCP). **Not indexed** — looked up by name right before you use the tool, so the index never grows with your tool count;
+- **Placement test before writing**: tool-specific identifiers → `skills/`; still true with another tool (taste, address, how you're addressed) → `reference/`; both → primary in `skills/` plus a pointer; unsure after a second → ask the user;
+- **Report-on-mismatch**: when a remembered fact no longer matches reality, mark it `❓unverified` first (never silently rewrite), write a pending note with the evidence, tell the user immediately, update after confirmation;
+- **Lean-recording rules (saves tokens)**: the delete test ("would removing this line cause a mistake?"), three things never to store (schema-declared / re-derivable by a query / time-varying), and budgets (per-tool 6KB/80 lines, reference 12KB, index entries 80 chars) — over budget means compress first, then ask the user for an exception; real files shrank 60–70%;
+- **Secrets red line**: memory files never store credentials (passwords, tokens, keys, ID numbers) or unrelated personal-security details;
+- **Rules versioning + upgrade notice**: the rules section carries `<!-- dswm:rules v=2 -->`. After upgrading, users on v1 (six-branch, no marker) get a **bilingual notice in the first session**: the agent reads the new template, **backs up** `AGENTS.md.bak-<date>`, merges only what changed and writes the marker back — **the plugin never rewrites your existing rules section**; it keeps reminding next session until upgraded;
+- Scaffold now creates `reference/skills/` with an `_about.md` (placement criteria + template);
+- Compatibility unchanged: `engines.dsh` still covers every 0.1.x / 0.2.x release line.
 
-> Full history: [Full changelog](#full-changelog) at the end of this file.
+> Full history in [Full changelog](#full-changelog) at the end.
 
 ## Overview — what problem does this solve?
 
@@ -33,9 +35,10 @@ Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**
 
 ```
 ~/.dsh/
-├── AGENTS.md              # index + six-rule maintenance convention (auto-injected)
+├── AGENTS.md              # index + seven-rule maintenance convention (auto-injected)
 └── workspace/             # the vault (a git repo)
     ├── reference/         # confirmed memory topics (indexed, searchable)
+    │   └── skills/        # per-tool memory: facts about one skill / MCP server (not indexed, looked up by name)
     ├── pending/           # unconfirmed drafts (NOT indexed; waiting for you to confirm)
     ├── archive/           # outdated topics (kept, not searched)
     └── memory-log.md      # append-only operation log (audit + freshness)
@@ -47,14 +50,27 @@ Every session, DSH auto-injects `~/.dsh/AGENTS.md` (the memory **index + rules**
 
 Each file is the full detail of one topic (e.g. `DOCKER-NAS.md`, `INFRA-SERVERS.md`, `HOME-ASSISTANT-CONTROL.md`), pointed to by an index entry in `AGENTS.md`; the file is read only when the task needs it — otherwise only the small index occupies context.
 
-### The six rules (all in AGENTS.md, injected into every session)
+### The seven rules (all in AGENTS.md, injected into every session)
 
 1. **Write trigger (realtime)** — capture memorable info **as it appears** during the session; write immediately (don't wait for session end, don't silently drop it). Writing is realtime (straight into `pending/`), confirming is deferred (reported at the start of your next session) — so `/new` or closing the page never loses anything.
 2. **Admission** — unconfirmed → `pending/`; say **"save"** / **"confirm"** / **"promote"** to promote to `reference/` + update index + log. TTL: 7d (interactive) / 30d (unattended).
 3. **Unattended sessions** (task-board timers, background subagents) — write `pending/` only, never promote themselves.
 4. **Periodic cleanup** — say **"organize memory"** → agent proposes reorganization (split/merge/rename/archive), you approve, outdated content goes to `archive/`.
 5. **Backup** — `workspace/` is a git repo; auto-commit after memory changes.
-6. **Retrieval** — check the index first; if no match, scan `reference/` (fallback), never assume "no memory".
+6. **Retrieval** — before using any skill / MCP, check `reference/skills/` for the matching file; then the index; then scan `reference/` (including `skills/`) as a fallback — never assume "no memory".
+7. **Report on mismatch** — when a remembered fact is wrong: mark `❓unverified (date)` (**never silently rewrite**) → write a pending note with "recorded / actual / evidence" → tell the user immediately → update after confirmation.
+
+#### What per-tool memory is
+
+Some facts are only needed **while using one tool**. Putting them in `SKILL.md` loses them when the skill updates; putting them in the memory index injects them into every session and wastes tokens. `reference/skills/` is the third place:
+
+| Where | What | When read |
+|---|---|---|
+| `SKILL.md` (shipped by the tool) | how to use it, workflow | when the skill loads |
+| `reference/skills/<tool>.md` | **stable external facts** (IDs, enums, endpoints, required params) and gotchas | right before using that tool |
+| `reference/<topic>.md` | cross-tool preferences and facts (taste, address, how you're addressed) | when an index entry matches |
+
+Example: a food-delivery MCP's store `storeCode`, combo `code`s and pickup enums → `skills/mcp-<server>.md`; "I don't eat cilantro" → `reference/`.
 
 ## Compatibility
 
@@ -65,7 +81,7 @@ Each file is the full detail of one topic (e.g. `DOCKER-NAS.md`, `INFRA-SERVERS.
 
 ### Known conflict with anchored modes (liangshen / Anchored Standard)
 
-**liangshen mode** and **Anchored Standard mode** clear the runtime context on the first turn and keep only your direct message, which **suppresses the automatic `~/.dsh/AGENTS.md` injection** performed by `dsh-agent-instructions`. DSWM's memory index and six-rule convention rely on that injection, so in these modes memory is not auto-loaded at the start of a session.
+**liangshen mode** and **Anchored Standard mode** clear the runtime context on the first turn and keep only your direct message, which **suppresses the automatic `~/.dsh/AGENTS.md` injection** performed by `dsh-agent-instructions`. DSWM's memory index and seven-rule convention rely on that injection, so in these modes memory is not auto-loaded at the start of a session.
 
 This is not a bug — it is the **deliberate design** of anchored modes (anchoring the reasoning trajectory to a minimal context). The fix is simple:
 
@@ -109,7 +125,7 @@ First startup syncs the skeleton, scaffolds the vault, and git-inits `workspace/
 dsh plugin --profile web remove dsh-simple-wiki-memory
 ```
 
-Removing the plugin stops the runtime hooks (auto-commit, pending report) but **keeps your data**: `~/.dsh/AGENTS.md` and `~/.dsh/workspace/` are not deleted. The six-rule convention stays in AGENTS.md (it is plain text the agent follows); delete that section manually if you want it gone.
+Removing the plugin stops the runtime hooks (auto-commit, pending report) but **keeps your data**: `~/.dsh/AGENTS.md` and `~/.dsh/workspace/` are not deleted. The seven-rule convention stays in AGENTS.md (it is plain text the agent follows); delete that section manually if you want it gone.
 
 ## Quick start
 
@@ -129,7 +145,7 @@ v0.1 has no user-facing configuration; defaults are safe. Planned (v0.2): settin
 
 ## Permissions & data
 
-- **Files**: reads/writes `~/.dsh/AGENTS.md` and `~/.dsh/workspace/` (creates `reference/`, `pending/`, `archive/`, `memory-log.md`; merges the rules section into AGENTS.md — never overwrites your index entries).
+- **Files**: reads/writes `~/.dsh/AGENTS.md` and `~/.dsh/workspace/` (creates `reference/`, `reference/skills/`, `pending/`, `archive/`, `memory-log.md`; merges the rules section into AGENTS.md — never overwrites your index entries).
 - **Commands**: runs `git init / add / commit` inside `~/.dsh/workspace/` (auto-backup).
 - **No network, no credentials, no telemetry.**
 - Reading memory works in **any** sandbox mode (reads are never sandboxed in DSH). Writing to `~/.dsh/workspace/` requires `danger-full-access`, or `workspace-write` with per-call approval escalation.
@@ -149,6 +165,15 @@ node --check lib/index.js   # syntax check
 Package layout: `lib/index.js` (sync + hooks), `assets/` (AGENTS.md / memory-log templates), `skills/memory-query/`. The plugin uses the DSH bundle distribution model (`dsh.bundle.patch` → `cordis.patch.yml`).
 
 ## Full changelog
+
+### v0.3.0 (2026-10-28) — per-tool memory + lean recording
+
+- Rules grew from six branches to seven: **per-tool memory** (`reference/skills/`), **placement test before writing**, **report-on-mismatch**;
+- Added **lean-recording rules** (delete test / three things never to store / tabular format / budgets / exception request) — fights memory files bloating over time;
+- Added the **secrets red line** (no credentials, no unrelated personal-security details);
+- Rules section now carries a version marker `<!-- dswm:rules v=2 -->`; existing users get a **bilingual upgrade notice** in their first session (agent merges + mandatory backup — the plugin never edits user files);
+- `scaffoldWorkspace` creates `reference/skills/` and its `_about.md`; the `memory-query` skill gained a per-tool lookup step;
+- Verified locally: fresh install / upgrade / up-to-date / marker missing / rules absent / pending report — 19 assertions, all passing.
 
 ### v0.2.0 (2026-10-19) — DSH 0.2.x compatibility
 

@@ -1,6 +1,6 @@
 {
   "name": "dsh-simple-wiki-memory",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "DSWM — Simple Wiki Memory for DeepSeek Harness: a self-maintaining persistent memory system (index + reference/pending/archive + git backup + memory skills).",
   "license": "MIT",
   "author": "rainow",
