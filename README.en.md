@@ -8,7 +8,9 @@ So the **index never grows with your memory count, and never grows with your too
 
 Built on DSH's native `dsh-agent-instructions` (AGENTS.md) mechanism.
 
-> Current version **v0.3.1** (2026-10-28) · [Changelog](#changelog) · 中文: [README.md](README.md)
+> Current version **v0.3.2** (2026-10-28) · [Changelog](#changelog) · 中文: [README.md](README.md)
+
+**What changed since 0.2.0** (if you are still on 0.2.0): every skill now gets its own markdown file for its preferences and gotchas — named after the skill, read automatically when that skill is used, so the index does not grow; the rules grew from six to seven (placement test / report-on-mismatch / lean recording / secrets red line). Verified against DSH **0.2.1-rc.4**.
 
 ## Quick start
 
@@ -71,7 +73,7 @@ Backed by the **lean-recording rules** (v0.3.0): the delete test ("would removin
 
 ## Compatibility
 
-- Verified against DSH **0.2.1-rc.2** (source review + the official compatibility evaluator); compatible with every 0.1.x / 0.2.x release line from 0.1.0-rc.7.
+- Verified against DSH **0.2.1-rc.4** (latest on the `next` channel): source review + the official compatibility evaluator + 19 end-to-end assertions all pass; compatible with every 0.1.x / 0.2.x release line from 0.1.0-rc.7 (including 0.2.1-rc.3/rc.4 and 0.2.2-alpha).
 - `engines.dsh` = `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`. DSH 0.2+ uses it to block installation / activation of versions outside the range; 0.3.x is not declared yet (upgrade DSWM then, or exempt temporarily with `dsh plugin allow-version`).
 - Depends on DSH's native `dsh-agent-instructions` (enabled by default in the `dsh-base` bundle); if your deployment disables it, memory will not be injected.
 
@@ -136,6 +138,19 @@ This is not a bug — it is the deliberate design of anchored modes (anchor the 
 </details>
 
 ## Changelog
+
+### v0.3.2 (2026-10-28) — DSH 0.2.1-rc.4 compatibility
+
+- Adapted to the latest **0.2.1-rc.4**: `session/event`+`turn/end`, the `agent/pre-step` payload and decision shape, and the `createUserMessage` source kind are all unchanged; the official compatibility evaluator passes for 0.1.0-rc.8 through 0.2.2-alpha.2;
+- `peerDependencies` now also lists the `^0.2.2-alpha.1` line (`engines.dsh` already covered `<0.3.0-0`);
+- All 19 end-to-end assertions re-run against rc.4's `dsh-llm`;
+- README gained a "what changed since 0.2.0" summary line (for users still on 0.2.0); compatibility section updated to rc.4.
+
+### v0.3.1 (2026-10-28) — docs only (README rewrite)
+
+- Opener rewritten as three parallel layers: ① index (auto-loaded) ② topics (read on demand) ③ tools (named after the skill, read when the skill is used);
+- Added a top-of-page quick start and a "who holds what" table; the seven rules compressed into a table; changelog moved to the end; anchored-mode conflict folded away;
+- Removed two unused screenshots (1.2 MB); npm tarball down to 55 KB. No code changes.
 
 ### v0.3.0 (2026-10-28) — per-tool memory + lean recording
 

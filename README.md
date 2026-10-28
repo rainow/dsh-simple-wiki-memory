@@ -8,7 +8,9 @@
 
 基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）原生 `dsh-agent-instructions`（AGENTS.md）机制的自维护持久记忆系统。无 RAG、无向量库、无运行时 LLM 调用。
 
-> 当前版本 **v0.3.1**（2026-10-28）· [更新记录](#更新记录) · English: [README.en.md](README.en.md)
+> 当前版本 **v0.3.2**（2026-10-28）· [更新记录](#更新记录) · English: [README.en.md](README.en.md)
+
+**0.2.0 之后改了什么**（如果你上次装的是 0.2.0）：给**每个技能**加一个 md 文档，记录它的偏好与踩坑——与 skill 同名，调这个 skill 时自动读，索引不膨胀；规则从六条升到七条（写入判据 / 出错即回报 / 记录规范 / 安全红线）。已适配 DSH **0.2.1-rc.4**。
 
 ## 30 秒上手
 
@@ -71,7 +73,7 @@ dsh plugin --profile web add dsh-simple-wiki-memory
 
 ## 兼容性
 
-- 已用 DSH **0.2.1-rc.2** 实测（源码对照 + 官方兼容性判定函数），兼容 0.1.0-rc.7 起全部 0.1.x / 0.2.x 发布线。
+- 已用 DSH **0.2.1-rc.4**（next 频道最新）实测：源码对照 + 官方兼容性判定函数 + 19 项端到端断言全通过；兼容 0.1.0-rc.7 起全部 0.1.x / 0.2.x 发布线（含 0.2.1-rc.3/rc.4 与 0.2.2-alpha）。
 - `engines.dsh` = `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`。DSH 0.2+ 会据此阻止不满足要求的版本安装 / 激活；0.3.x 未声明（届时需升级 DSWM，或 `dsh plugin allow-version` 临时豁免）。
 - 依赖 DSH 原生 `dsh-agent-instructions`（`dsh-base` bundle 默认启用）；部署若禁用它，记忆不会注入。
 
@@ -136,6 +138,19 @@ node --check lib/index.js
 </details>
 
 ## 更新记录
+
+### v0.3.2（2026-10-28）— 适配 DSH 0.2.1-rc.4
+
+- 适配本机最新 **0.2.1-rc.4**：`session/event`+`turn/end`、`agent/pre-step` 载荷与决策形状、`createUserMessage` 来源 kind 均未变；官方兼容性判定函数在 0.1.0-rc.8 ~ 0.2.2-alpha.2 全部通过；
+- `peerDependencies` 补 `^0.2.2-alpha.1` 发布线（`engines.dsh` 本就覆盖 `<0.3.0-0`）；
+- 19 项端到端断言在 rc.4 的 `dsh-llm` 下重跑全过；
+- README 增「0.2.0 之后改了什么」总结行（面向仍停留在 0.2.0 的用户），兼容性一节更新为 rc.4 实测。
+
+### v0.3.1（2026-10-28）— 文档版（README 重写）
+
+- 开篇改为三层并列：① 索引（自动加载）② 主题（按需 read）③ 技能（与 skill 同名，调 skill 时自动读）；
+- 新增「30 秒上手」置顶、「三处分工」表；七条规则压成表格；更新记录移到文末；锚定模式冲突折叠；
+- 删除两张未引用的截图（1.2MB），npm 包体积降至 55KB。无代码变更。
 
 ### v0.3.0（2026-10-28）— 技能记忆 + 记录规范
 
