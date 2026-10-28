@@ -8,7 +8,7 @@ So the **index never grows with your memory count, and never grows with your too
 
 Built on DSH's native `dsh-agent-instructions` (AGENTS.md) mechanism.
 
-> Current version **v0.3.0** (2026-10-28) · [Changelog](#changelog) · 中文: [README.md](README.md)
+> Current version **v0.3.1** (2026-10-28) · [Changelog](#changelog) · 中文: [README.md](README.md)
 
 ## Quick start
 

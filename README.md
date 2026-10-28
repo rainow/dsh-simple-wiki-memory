@@ -8,7 +8,7 @@
 
 基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）原生 `dsh-agent-instructions`（AGENTS.md）机制的自维护持久记忆系统。无 RAG、无向量库、无运行时 LLM 调用。
 
-> 当前版本 **v0.3.0**（2026-10-28）· [更新记录](#更新记录) · English: [README.en.md](README.en.md)
+> 当前版本 **v0.3.1**（2026-10-28）· [更新记录](#更新记录) · English: [README.en.md](README.en.md)
 
 ## 30 秒上手
 
