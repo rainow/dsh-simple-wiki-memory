@@ -1,5 +1,7 @@
 # DSWM — Simple Wiki Memory for DeepSeek Harness
 
+> Also works for **OpenClaw**: [openclaw/](https://github.com/rainow/dsh-simple-wiki-memory/tree/master/openclaw) is a plain-text edition — rules plus directory conventions, no plugin, no hooks.
+
 A radically simple llm-wiki-style memory plugin with three layers, each doing one job:
 
 **① Index** — one document, auto-loaded into every session · **② Topics** — one markdown file per topic, read only when the task needs it · **③ Tools** — one markdown file per skill (named after the skill), read automatically when that skill is used

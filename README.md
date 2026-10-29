@@ -1,5 +1,7 @@
 # DSWM — DeepSeek Harness 简易 Wiki 记忆插件
 
+> 也给 **OpenClaw** 用：同仓库 [openclaw/](https://github.com/rainow/dsh-simple-wiki-memory/tree/master/openclaw) 是纯文本版——规则 + 目录约定，无插件、无 hook，装法见它的 README。
+
 超级简化版 llm-wiki 记忆插件，三层各司其职：
 
 **① 索引** 一份文档，每个会话自动加载 · **② 主题** 每个 topic 一个 md，任务相关时才 read · **③ 技能** 每个 skill 一个 md（与 skill 同名），调用该 skill 时自动读
