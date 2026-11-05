@@ -12,7 +12,7 @@ Built on DSH's native `dsh-agent-instructions` (AGENTS.md) mechanism.
 
 > Current version **v0.3.2** (2026-10-28) · [Changelog](#changelog) · 中文: [README.md](README.md)
 
-**What changed since 0.2.0** (if you are still on 0.2.0): every skill now gets its own markdown file for its preferences and gotchas — named after the skill, read automatically when that skill is used, so the index does not grow; the rules grew from six to seven (placement test / report-on-mismatch / lean recording / secrets red line). Verified against DSH **0.2.1-rc.4**.
+**What changed since 0.2.0** (if you are still on 0.2.0): every skill now gets its own markdown file for its preferences and gotchas — named after the skill, read automatically when that skill is used, so the index does not grow; the rules grew from six to seven (placement test / report-on-mismatch / lean recording / secrets red line). Verified against DSH **0.2.2-rc.1**.
 
 ## Quick start
 
@@ -75,7 +75,8 @@ Backed by the **lean-recording rules** (v0.3.0): the delete test ("would removin
 
 ## Compatibility
 
-- Verified against DSH **0.2.1-rc.4** (latest on the `next` channel): source review + the official compatibility evaluator + 19 end-to-end assertions all pass; compatible with every 0.1.x / 0.2.x release line from 0.1.0-rc.7 (including 0.2.1-rc.3/rc.4 and 0.2.2-alpha).
+- Verified against DSH **0.2.2-rc.1** (latest on the `next` channel): source review + the official compatibility evaluator + smoke tests all pass; compatible with every 0.1.x / 0.2.x release line from 0.1.0-rc.7 (including 0.2.1-rc.x, 0.2.2-rc.1 and 0.2.2-alpha).
+- Two 0.2.2 changes do not affect this plugin: `agent/pre-step` **adds** `modelSelection` to its payload (decision shape unchanged), and `dsh-agent-instructions` now budgets **per chain** (user-global / project) — this plugin uses only the single `~/.dsh/AGENTS.md` chain, still 64KB.
 - `engines.dsh` = `>=0.1.0-rc.7 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0`. DSH 0.2+ uses it to block installation / activation of versions outside the range; 0.3.x is not declared yet (upgrade DSWM then, or exempt temporarily with `dsh plugin allow-version`).
 - Depends on DSH's native `dsh-agent-instructions` (enabled by default in the `dsh-base` bundle); if your deployment disables it, memory will not be injected.
 
