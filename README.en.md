@@ -10,9 +10,9 @@ So the **index never grows with your memory count, and never grows with your too
 
 Built on DSH's native `dsh-agent-instructions` (AGENTS.md) mechanism.
 
-> Current version **v0.3.2** (2026-10-28) · [Changelog](#changelog) · 中文: [README.md](README.md)
+> Current version **v0.4.0** (2026-11-05) · [Changelog](#changelog) · 中文: [README.md](README.md)
 
-**What changed since 0.2.0** (if you are still on 0.2.0): every skill now gets its own markdown file for its preferences and gotchas — named after the skill, read automatically when that skill is used, so the index does not grow; the rules grew from six to seven (placement test / report-on-mismatch / lean recording / secrets red line). Verified against DSH **0.2.2-rc.1**.
+**What changed since 0.2.0** (if you are still on 0.2.0): every skill now gets its own markdown file for its preferences and gotchas — named after the skill, read automatically when that skill is used, so the index does not grow; the rules grew from six to seven (placement test / report-on-mismatch / lean recording / secrets red line). **From 0.4.0 the placement test is "what are you doing when you read it"**: runtime facts → `skills/`, patch / upgrade / troubleshooting notes → `reference/`. Verified against DSH **0.2.2-rc.1**.
 
 ## Quick start
 
@@ -141,6 +141,14 @@ This is not a bug — it is the deliberate design of anchored modes (anchor the 
 </details>
 
 ## Changelog
+
+### v0.4.0 (2026-11-05) — placement test pivoted (rules v3)
+
+- The placement test moved from "does the memory contain tool-specific identifiers" to "what are you doing when you read it": runtime facts → `reference/skills/`, patch / upgrade / troubleshooting notes → `reference/` (DSH plugins at the top level). Identifiers are now a hint, not the test.
+- Why: plugin patches, config keys and build gotchas are full of `code` / `id` / parameter names, so the old test filed them under per-tool memory — yet nobody reads them when *using* the plugin, only when *changing* it.
+- Promotion lint now checks both directions (`skills/` ↔ `reference/`) instead of a one-way check with a plugin exception; rule 6 adds "before changing / upgrading / uninstalling a plugin, read the plugin's index entries, not `skills/`".
+- Template and `skills-about.md` synced; the rules marker moves to `<!-- dswm:rules v=3 -->`, so v2 users get one merge prompt on their next session (bilingual change summary).
+- Compatibility unchanged: still verified against DSH 0.2.2-rc.1 (only the rule-version check and hint text changed in code).
 
 ### v0.3.2 (2026-10-28) — DSH 0.2.1-rc.4 compatibility
 
